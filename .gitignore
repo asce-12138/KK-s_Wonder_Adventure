@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+
+.cursor/
+
+.vscode/
+
+# Python virtual environment
+.venv/
+env/
+
