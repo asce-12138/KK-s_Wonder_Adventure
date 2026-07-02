@@ -54,7 +54,7 @@ PowerShell运行
 `python src/main.py`
 如果游戏能正常启动，说明环境配置成功。
 
-###🎯 场景二：队友修改代码
+### 🎯 场景二：队友修改代码
 修改前：先同步最新代码
 PowerShell
 
