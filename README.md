@@ -32,7 +32,13 @@ game_python/
 #### 第 1 步：克隆仓库
 ```
 # 队友需要先安装 Git 和 Python 3.11
-# 然后在本地任意目录执行：
+# 安装 Git
+winget install Git.Git
+# 进入你想存放项目的目录（比如桌面）
+cd C:\Users\DELL\Desktop
+
+# 克隆项目
+
 git clone https://github.com/asce-12138/KK-s_Wonder_Adventure.git
 cd KK-s_Wonder_Adventure
 ```
