@@ -27,39 +27,34 @@ game_python/
 ├── requirements.txt  # 项目依赖
 └── README.md        # 项目说明
 ```
-场景一：第一次拉取代码
+
+场景一：队友第一次拉取代码
 第 1 步：克隆仓库
-PowerShell
-`# 队友需要先安装 Git 和 Python 3.11# 然后在本地任意目录执行：git clone https://github.com/asce-12138/KK-s_Wonder_Adventure.gitcd KK-s_Wonder_Adventure`
-
 第 2 步：创建虚拟环境
-PowerShell运行
-`# 在项目根目录执行python -m venv .venv.\.venv\Scripts\Activate.ps1`
-
 第 3 步：安装依赖
-PowerShell运行
-`pip install -r requirements.txt`
+PowerShell
 
+
+
+运行
+pip install -r requirements.txt
 第 4 步：运行游戏验证
-PowerShell运行
-`python src/main.py`
+PowerShell
 
+
+
+运行
+python src/main.py
 如果游戏能正常启动，说明环境配置成功。
 
-修改中：编写代码
-队友可以自由修改任何文件，比如：
+🎯 场景二：队友修改代码
+修改前：先同步最新代码
+PowerShell
 
-- 添加新英雄 → 修改 src/modules/hero_config.py
-- 添加新武器 → 修改 src/modules/weapons.py
-- 修复 bug → 修改对应文件
-- 添加新资源 → 把图片放到 assets/images/ 对应目录 修改后：提交和推送
-1. 查看修改了哪些文件
 
-2. 添加修改的文件
 
-3. 写一个清晰的 commit message
-
-4. 推送到 GitHub
+运行
+git checkout maingit pull origin main
 
 ### 🎯 场景三：多个队友同时修改（出现冲突）
 如果你们同时修改了同一个文件，推送时会报错：
