@@ -119,9 +119,6 @@ class ResourceManager:
         Returns:
             pygame.mixer.Sound: 加载的音效对象
         """
-
-        return None
-    
         if name in self.sounds:
             return self.sounds[name]
             
@@ -145,8 +142,6 @@ class ResourceManager:
         Returns:
             str: 音乐文件的完整路径
         """
-
-        return None
         if name in self.music:
             return self.music[name]
             
@@ -168,8 +163,6 @@ class ResourceManager:
         Returns:
             pygame.Surface: 图片surface,如果不存在返回错误提示图片
         """
-
-        return None
         if name not in self.images:
             print(f"图片资源 {name} 未加载")
             surface = pygame.Surface((1, 1))
@@ -186,7 +179,6 @@ class ResourceManager:
         Returns:
             pygame.mixer.Sound: 音效对象,如果不存在返回None
         """
-        return None
         if name not in self.sounds:
             print(f"音效资源 {name} 未加载")
             return None
@@ -201,7 +193,6 @@ class ResourceManager:
         Returns:
             str: 音乐文件路径,如果不存在返回None
         """
-        return None
         if name not in self.music:
             print(f"音乐资源 {name} 未加载")
             return None
@@ -213,7 +204,6 @@ class ResourceManager:
         Args:
             name: 音效资源名称
         """
-        return None
         sound = self.get_sound(name)
         if sound:
             sound.play()
@@ -225,7 +215,6 @@ class ResourceManager:
             name: 音乐资源名称
             loops: 循环次数,-1表示无限循环
         """
-        return None
         music_path = self.get_music(name)
         if music_path:
             pygame.mixer.music.load(music_path)
@@ -328,30 +317,71 @@ class ResourceManager:
         self.fonts.clear()
         self.animations.clear()
 
+    def _find_music_file(self, base_name, subfolder="bgm"):
+        """查找音乐文件，支持多种格式
+        
+        Args:
+            base_name: 音乐文件名（不含扩展名）
+            subfolder: 子文件夹名称，默认为bgm
+            
+        Returns:
+            str: 找到的音乐文件相对路径，如果没有找到返回None
+        """
+        formats = ["mp3", "wav", "ogg", "flac"]
+        for fmt in formats:
+            file_path = f"music/{subfolder}/{base_name}.{fmt}"
+            full_path = os.path.join(self.resource_dir, file_path)
+            if os.path.exists(full_path):
+                return file_path
+        return None
+    
+    def _find_sound_file(self, base_name, subfolder="sfx"):
+        """查找音效文件，支持多种格式
+        
+        Args:
+            base_name: 音效文件名（不含扩展名）
+            subfolder: 子文件夹名称，默认为sfx
+            
+        Returns:
+            str: 找到的音效文件相对路径，如果没有找到返回None
+        """
+        formats = ["wav", "mp3", "ogg", "flac"]
+        for fmt in formats:
+            file_path = f"music/{subfolder}/{base_name}.{fmt}"
+            full_path = os.path.join(self.resource_dir, file_path)
+            if os.path.exists(full_path):
+                return file_path
+        return None
+    
     def _init_resources(self):
         """初始化游戏所需的资源"""
-        # 加载背景音乐
-        self.load_music("background", "music/background.mp3")
+        # 加载游戏背景音乐
+        bgm_path = self._find_music_file("background")
+        if bgm_path:
+            self.load_music("background", bgm_path)
+        
+        # 加载主菜单背景音乐
+        menu_path = self._find_music_file("menu")
+        if menu_path:
+            self.load_music("menu", menu_path)
         
         # 加载音效
-        self.load_sound("hit", "sounds/hit.wav")
-        self.load_sound("enemy_death", "sounds/enemy_death.wav")
-        self.load_sound("player_hurt", "sounds/player_hurt.wav")
-        self.load_sound("player_death", "sounds/player_hurt.wav")  # 使用player_hurt音效作为临时替代
-        self.load_sound("level_up", "sounds/level_up.wav")
-        self.load_sound("collect_exp", "sounds/collect_exp.wav")
-        self.load_sound("collect_coin", "sounds/collect_coin.wav")
-        self.load_sound("heal", "sounds/heal.wav")
-        self.load_sound("upgrade", "sounds/upgrade.wav")
-        self.load_sound("menu_move", "sounds/menu_move.wav")
-        self.load_sound("menu_select", "sounds/menu_select.wav")
+        self.load_sound("hit", self._find_sound_file("hit"))
+        self.load_sound("enemy_hit", self._find_sound_file("enemy_hit"))
+        self.load_sound("enemy_death", self._find_sound_file("enemy_death"))
+        self.load_sound("player_hurt", self._find_sound_file("player_hurt"))
+        self.load_sound("player_death", self._find_sound_file("player_hurt"))  # 使用player_hurt音效作为临时替代
+        self.load_sound("level_up", self._find_sound_file("level_up"))
+        self.load_sound("collect_exp", self._find_sound_file("collect_exp"))
+        self.load_sound("collect_coin", self._find_sound_file("collect_coin"))
+        self.load_sound("heal", self._find_sound_file("heal"))
+        self.load_sound("upgrade", self._find_sound_file("upgrade"))
+        self.load_sound("menu_move", self._find_sound_file("menu_move"))
+        self.load_sound("menu_select", self._find_sound_file("menu_select"))
+        self.load_sound("menu_show", self._find_sound_file("menu_show"))
         
         # 设置音量
         self.set_music_volume(0.5)  # 背景音乐音量
-        for sound_name in ["hit", "enemy_death", "player_hurt", "level_up", 
-                          "collect_exp", "collect_coin", "heal", "upgrade",
-                          "menu_move", "menu_select"]:
-            self.set_sound_volume(sound_name, 0.7)  # 音效音量
 
 # 创建全局资源管理器实例
 resource_manager = ResourceManager() 

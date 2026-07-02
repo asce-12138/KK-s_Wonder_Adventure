@@ -4,6 +4,7 @@ from modules.game import Game
 
 def main():
     pygame.init()
+    pygame.mixer.init()
     screen_width = 1280
     screen_height = 720
     screen = pygame.display.set_mode((screen_width, screen_height))
@@ -25,9 +26,9 @@ def main():
         game.render()
         pygame.display.flip()
     
-    # 如果游戏结束，退出
     pygame.quit()
     sys.exit()
 
 if __name__ == "__main__":
     main() 
+    

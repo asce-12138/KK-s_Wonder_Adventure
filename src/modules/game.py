@@ -22,6 +22,8 @@ class Game:
         self.in_main_menu = True  # 是否在主菜单
         self.in_map_hero_select = False  # 是否在地图和英雄选择界面
         
+        resource_manager._init_resources()
+        
         # 获取屏幕中心点
         self.screen_center_x = self.screen.get_width() // 2
         self.screen_center_y = self.screen.get_height() // 2
@@ -67,6 +69,9 @@ class Game:
         
         # 地图状态
         self.current_map = None  # 当前地图名称
+        
+        # 播放主菜单背景音乐
+        self._play_menu_music()
         
     def _set_map_boundaries(self):
         """根据当前地图尺寸设置边界
@@ -152,6 +157,15 @@ class Game:
         """从地图和英雄选择界面返回主菜单"""
         self.in_map_hero_select = False
         self.in_main_menu = True
+        self._play_menu_music()
+        
+    def _play_menu_music(self):
+        """播放主菜单背景音乐"""
+        resource_manager.play_music("menu", loops=-1)
+        
+    def _play_game_music(self):
+        """播放游戏背景音乐"""
+        resource_manager.play_music("background", loops=-1)
         
     def start_new_game(self):
         """显示地图和英雄选择界面"""
@@ -402,7 +416,7 @@ class Game:
             elif action == "main_menu":
                 self.in_main_menu = True
                 self.game_over = False
-                resource_manager.stop_music()  # 停止游戏音乐
+                self._play_menu_music()  # 切换到菜单音乐
             elif action == "exit":
                 self.running = False  # 退出游戏
             return
@@ -420,7 +434,7 @@ class Game:
             elif action == "main_menu":  # 返回主菜单
                 self.in_main_menu = True
                 self.paused = False
-                resource_manager.stop_music()  # 停止游戏音乐
+                self._play_menu_music()  # 切换到菜单音乐
             elif action == "exit":  # 退出游戏
                 self.running = False  # 直接退出游戏
             return

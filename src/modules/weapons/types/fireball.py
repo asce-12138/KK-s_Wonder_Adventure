@@ -243,8 +243,8 @@ class Fireball(Weapon):
         
         # 加载音效（使用try-except块处理可能不存在的音效）
         try:
-            resource_manager.load_sound('fireball_cast', 'sounds/weapons/fireball_cast.wav')
-            resource_manager.load_sound('fireball_explode', 'sounds/weapons/fireball_explode.wav')
+            resource_manager.load_sound('fireball_cast', 'music/sfx/weapons/fireball.wav')
+            resource_manager.load_sound('fireball_explode', 'music/sfx/weapons/fireball.wav')
         except Exception as e:
             # 在测试环境中可能没有音效资源，忽略错误
             print(f"Warning: Could not load fireball sounds: {e}")

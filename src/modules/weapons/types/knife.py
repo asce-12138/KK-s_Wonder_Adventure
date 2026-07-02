@@ -105,7 +105,7 @@ class Knife(Weapon):
         self.rect = self.image.get_rect()
 
         # 加载攻击音效
-        resource_manager.load_sound('knife_throw', 'sounds/weapons/knife_throw.wav')
+        resource_manager.load_sound('knife_throw', 'music/sfx/weapons/knife_throw.wav')
         
     def update(self, dt):
         super().update(dt)

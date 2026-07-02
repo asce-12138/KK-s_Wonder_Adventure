@@ -286,8 +286,8 @@ class FrostNova(Weapon):
         
         # 加载音效
         try:
-            resource_manager.load_sound('frost_nova_cast', 'sounds/weapons/frost_nova_cast.wav')
-            resource_manager.load_sound('frost_nova_explode', 'sounds/weapons/frost_nova_explode.wav')
+            resource_manager.load_sound('frost_nova_cast', 'music/sfx/weapons/frost_nova.wav')
+            resource_manager.load_sound('frost_nova_explode', 'music/sfx/weapons/frost_nova.wav')
         except Exception as e:
             # 在测试环境中可能没有音效资源，忽略错误
             print(f"Warning: Could not load frost nova explosion sound: {e}")
