@@ -117,12 +117,19 @@ class ResourceManager:
             file_path: 相对于assets目录的文件路径
             
         Returns:
-            pygame.mixer.Sound: 加载的音效对象
+            pygame.mixer.Sound: 加载的音效对象,如果mixer未初始化或文件不存在返回None
         """
         if name in self.sounds:
             return self.sounds[name]
             
-        # 规范化路径，确保在所有操作系统上都能正确工作
+        if not pygame.mixer.get_init():
+            print(f"⚠ mixer未初始化,跳过加载音效 {name}")
+            return None
+            
+        if file_path is None:
+            print(f"⚠ 音效文件路径为空,跳过加载音效 {name}")
+            return None
+            
         full_path = os.path.normpath(os.path.join(self.resource_dir, file_path))
         try:
             sound = pygame.mixer.Sound(full_path)
@@ -204,6 +211,8 @@ class ResourceManager:
         Args:
             name: 音效资源名称
         """
+        if not pygame.mixer.get_init():
+            return
         sound = self.get_sound(name)
         if sound:
             sound.play()
@@ -215,6 +224,8 @@ class ResourceManager:
             name: 音乐资源名称
             loops: 循环次数,-1表示无限循环
         """
+        if not pygame.mixer.get_init():
+            return
         music_path = self.get_music(name)
         if music_path:
             pygame.mixer.music.load(music_path)
@@ -222,22 +233,30 @@ class ResourceManager:
             
     def stop_music(self):
         """停止当前播放的音乐"""
+        if not pygame.mixer.get_init():
+            return
         pygame.mixer.music.stop()
         
     def pause_music(self):
         """暂停当前播放的音乐"""
+        if not pygame.mixer.get_init():
+            return
         pygame.mixer.music.pause()
         
     def unpause_music(self):
         """恢复播放暂停的音乐"""
+        if not pygame.mixer.get_init():
+            return
         pygame.mixer.music.unpause()
         
     def set_music_volume(self, volume: float):
         """设置音乐音量
-        
+
         Args:
             volume: 音量值(0.0 - 1.0)
         """
+        if not pygame.mixer.get_init():
+            return  # mixer 未初始化,跳过
         pygame.mixer.music.set_volume(volume)
         
     def set_sound_volume(self, name: str, volume: float):
