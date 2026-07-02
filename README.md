@@ -31,13 +31,60 @@ game_python/
 第 1 步：克隆仓库
 PowerShell
 `# 队友需要先安装 Git 和 Python 3.11# 然后在本地任意目录执行：git clone https://github.com/asce-12138/KK-s_Wonder_Adventure.gitcd KK-s_Wonder_Adventure`
+
 第 2 步：创建虚拟环境
 PowerShell运行
 `# 在项目根目录执行python -m venv .venv.\.venv\Scripts\Activate.ps1`
+
 第 3 步：安装依赖
 PowerShell运行
 `pip install -r requirements.txt`
+
 第 4 步：运行游戏验证
 PowerShell运行
 `python src/main.py`
+
 如果游戏能正常启动，说明环境配置成功。
+
+修改中：编写代码
+队友可以自由修改任何文件，比如：
+
+- 添加新英雄 → 修改 src/modules/hero_config.py
+- 添加新武器 → 修改 src/modules/weapons.py
+- 修复 bug → 修改对应文件
+- 添加新资源 → 把图片放到 assets/images/ 对应目录 修改后：提交和推送
+1. 查看修改了哪些文件
+
+2. 添加修改的文件
+
+3. 写一个清晰的 commit message
+
+4. 推送到 GitHub
+
+### 🎯 场景三：多个队友同时修改（出现冲突）
+如果你们同时修改了同一个文件，推送时会报错：
+
+```
+# 先拉取最新代码
+git pull origin main
+
+# 如果有冲突，Git 会提示哪些文件冲突
+# 打开冲突文件，手动解决冲突（删除 <<<<<<<  ======= >>>>>>> 标记）
+
+# 解决后
+git add .
+git commit -m "merge: 解决冲突"
+git push origin main
+```
+### 🔧 队友的 Git 基础配置（首次使用必做）
+```
+git config --global user.name "队友的名字"
+git config --global user.email "队友的邮箱"
+
+# 推荐用 SSH（避免每次输密码）：
+ssh-keygen -t rsa -b 4096
+# 然后把 ~/.ssh/id_rsa.pub 内容添加到 GitHub Settings > SSH Keys
+
+# 修改远程 URL 为 SSH
+git remote set-url origin git@github.com:asce-12138/KK-s_Wonder_Adventure.git
+```
