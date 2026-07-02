@@ -46,6 +46,8 @@ python -m venv .venv
 PowerShell运行
 
 `pip install -r requirements.txt`
+
+
 第 4 步：运行游戏验证
 PowerShell运行
 
