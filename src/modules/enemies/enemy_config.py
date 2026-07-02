@@ -37,7 +37,7 @@ ENEMY_CONFIGS = {
     # 幽灵 - 基础敌人
     "ghost": {
         "health": 80,           # 基础生命值
-        "damage": 10,           # 基础伤害
+        "damage": 25,           # 基础伤害（从10提高到25）
         "speed": 100,           # 基础移动速度
         "score_value": 50,      # 击败后获得的分数
         "animation_speed": 0.0333, # 动画速度
@@ -47,7 +47,7 @@ ENEMY_CONFIGS = {
     # 萝卜 - 较慢但更健壮的敌人
     "radish": {
         "health": 150,
-        "damage": 15,
+        "damage": 35,           # 基础伤害（从15提高到35）
         "speed": 70,
         "score_value": 15,
         "animation_speed": 0.0333,
@@ -57,7 +57,7 @@ ENEMY_CONFIGS = {
     # 蝙蝠 - 快速但脆弱的敌人
     "bat": {
         "health": 60,
-        "damage": 8,
+        "damage": 20,           # 基础伤害（从8提高到20）
         "speed": 160,
         "score_value": 80,
         "animation_speed": 0.0333,
@@ -67,7 +67,7 @@ ENEMY_CONFIGS = {
     # 史莱姆 - 远程攻击敌人
     "slime": {
         "health": 100,
-        "damage": 12,
+        "damage": 30,           # 基础伤害（从12提高到30）
         "speed": 80,
         "score_value": 150,
         "animation_speed": 0.0333,
@@ -81,7 +81,7 @@ ENEMY_CONFIGS = {
     # boss1 - Boss级敌人，每5次生成一次，数值很高
     "boss1": {
         "health": 1000,
-        "damage": 80,
+        "damage": 150,          # 基础伤害（从80提高到150）
         "speed": 150,
         "score_value": 1000,
         "animation_speed": 0.0333,

@@ -708,9 +708,13 @@ class Game:
                 if player_rect.colliderect(enemy.rect):
                     # 进行像素级碰撞检测
                     if apply_mask_collision(self.player, enemy):
-                        if enemy.attack_player(self.player):
+                        # 玩家与敌人碰撞，立即造成伤害
+                        damage_amount = enemy.damage
+                        if self.player.take_damage(damage_amount):
                             # 播放受伤音效
                             resource_manager.play_sound("player_hurt")
+                            # 播放击退效果
+                            self._knockback_player(enemy)
                             break  # 一次只处理一个碰撞
         
     def _update_game_state(self):
@@ -728,3 +732,30 @@ class Game:
         # 确保敌人管理器存在再更新难度
         if self.enemy_manager:
             self.enemy_manager.difficulty_level = self.level  # 更新敌人管理器中的难度等级 
+    
+    def _knockback_player(self, enemy):
+        """
+        玩家被敌人碰撞后产生击退效果
+        
+        Args:
+            enemy: 碰撞的敌人
+        """
+        if not self.player or not enemy:
+            return
+        
+        # 计算击退方向（从敌人指向玩家的反方向）
+        dx = self.player.world_x - enemy.rect.centerx
+        dy = self.player.world_y - enemy.rect.centery
+        distance = (dx**2 + dy**2)**0.5
+        
+        if distance == 0:
+            return
+        
+        # 标准化方向向量
+        dx = dx / distance
+        dy = dy / distance
+        
+        # 应用击退位移（向后退一段距离）
+        knockback_distance = 50  # 击退距离
+        self.player.world_x += dx * knockback_distance
+        self.player.world_y += dy * knockback_distance
