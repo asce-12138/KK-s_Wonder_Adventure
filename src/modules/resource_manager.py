@@ -367,6 +367,7 @@ class ResourceManager:
         
         # 加载音效
         self.load_sound("hit", self._find_sound_file("hit"))
+        self.load_sound("enemy_hit", self._find_sound_file("enemy_hit"))
         self.load_sound("enemy_death", self._find_sound_file("enemy_death"))
         self.load_sound("player_hurt", self._find_sound_file("player_hurt"))
         self.load_sound("player_death", self._find_sound_file("player_hurt"))  # 使用player_hurt音效作为临时替代
