@@ -1,10 +1,4 @@
-# 游戏名字还没想好
-
-这是一个使用 Cursor + Pygame 开发的2D像素风肉鸽游戏。边玩边学。
-
-**（35% cursor聊天与生成 + 15% 游戏策划与需求分析 + 15% debug + 15% codereview + 10% 找素材 + 4% 开开脑洞 + 4% 等待时玩手机 + 1% 写一些没有意义的README）**
-
-## 项目结构
+# KK的奇妙冒险
 
 ```
 game_python/
@@ -33,88 +27,17 @@ game_python/
 ├── requirements.txt  # 项目依赖
 └── README.md        # 项目说明
 ```
-
-## 安装
-
-1. 确保已安装Python 3.8或更高版本
-2. 安装依赖：
-```bash
-pip install -r requirements.txt
-```
-3. cursor版本：0.47.8
-4. LLM: claude-3.7-sonnet
-
-## 运行
-
-在项目根目录下运行：
-```bash
-python src/main.py
-```
-
-## 游戏控制
-
-- WASD：移动
-- ESC：暂停游戏
-- 空格：确认/选择
-
-## 游戏特性
-
-- 多种敌人类型（幽灵、萝卜、蝙蝠、史莱姆）
-- 武器系统（飞刀、火球、冰霜新星）
-- 升级系统
-- 存档系统
-- 物品掉落系统
-- 动画系统
-- 音效系统
-
-## 开发说明
-
-- 使用Python 3.8+
-- 基于Pygame 2.5.0
-- 采用面向对象设计
-- 模块化架构
-- 支持存档功能
-- 完整的资源管理系统
-
-## 游戏特点
-
-- 自动攻击系统
-- 升级系统
-- 敌人生成系统
-- 难度随时间递增
-
-
-## 当前实现
-- 玩玩看就知道了
-
-## 待实现功能
-- [ ] 重构存档系统，感觉没必要支持存档（这个类型的游戏，没有开不同存档分支的必要）
-- [ ] 添加更多武器类型
-  - [x] 添加了火球术、冰霜新星的代码
-  - [x] 完善火球术、冰霜新星的逻辑和特效
-  - [x] 添加武器debuff效果，支持燃烧、减速。
-  - [ ] 增强debuff系统，实现属性的相生相克，如：冰+火会让两种特效均失效；雷+火能够提升更多伤害等。
-- [ ] 添加系统素材
-  - [ ] 添加音效
-  - [x] 添加一张基础地图
-  - [ ] 扩展地图种类
-- [ ] 敌人系统扩展，攻击方式和debuff判定等
-  - [x] 添加Ghost\Radish\Bat\Slime三种敌人，其中Bat属于小boss类型，Slime属于远程攻击敌人
-  - [ ] 优化敌人生成数量、时间等策略 
-- [ ] 优化物品掉落系统
-  - [ ] 宝箱掉落与抽奖逻辑
-  - [ ] 不同的经验球类型
-  - [ ] 随机生成可击破的道具
-- [ ] 交互菜单
-  - [x] 主菜单、暂停菜单支持保存游戏和读取游戏
-  - [ ] 开始新游戏，支持英雄选择、难易度选择
-  - [ ] 支持设置
-  - [ ] 支持全局的技能属性
-
-## 致谢
-素材：
-- Ninja_Frog\Ghost\Bat\Radish 来自：[pixel-adventure](https://pixelfrog-assets.itch.io/pixel-adventure-1)
-- weapons\passives image 来自：[raven-fantasy-icons](https://clockworkraven.itch.io/raven-fantasy-icons)
-- chest image 来自：[Assorted RPG Icons ](https://merchant-shade.itch.io/16x16-mixed-rpg-icons)
-- explotion 来自：[Pixel Effect RPG Part](https://bdragon1727.itch.io/64x64-pixel-effect-rpg-part-1)
-- map tile 来自：[Pixel Art Tileset](https://craftpix.net/freebies/free-fields-tileset-pixel-art-for-tower-defense/)
+场景一：第一次拉取代码
+第 1 步：克隆仓库
+PowerShell
+`# 队友需要先安装 Git 和 Python 3.11# 然后在本地任意目录执行：git clone https://github.com/asce-12138/KK-s_Wonder_Adventure.gitcd KK-s_Wonder_Adventure`
+第 2 步：创建虚拟环境
+PowerShell运行
+`# 在项目根目录执行python -m venv .venv.\.venv\Scripts\Activate.ps1`
+第 3 步：安装依赖
+PowerShell运行
+`pip install -r requirements.txt`
+第 4 步：运行游戏验证
+PowerShell运行
+`python src/main.py`
+如果游戏能正常启动，说明环境配置成功。
