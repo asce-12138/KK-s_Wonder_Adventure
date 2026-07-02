@@ -28,26 +28,31 @@ game_python/
 └── README.md        # 项目说明
 ```
 
-场景一：队友第一次拉取代码
+### 🎯 场景一：队友第一次拉取代码
 第 1 步：克隆仓库
+```
+# 队友需要先安装 Git 和 Python 3.11
+# 然后在本地任意目录执行：
+git clone https://github.com/asce-12138/KK-s_Wonder_Adventure.git
+cd KK-s_Wonder_Adventure
+```
 第 2 步：创建虚拟环境
+```
+# 在项目根目录执行
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
 第 3 步：安装依赖
-PowerShell
+PowerShell运行
 
-
-
-运行
-pip install -r requirements.txt
+`pip install -r requirements.txt`
 第 4 步：运行游戏验证
-PowerShell
+PowerShell运行
 
-
-
-运行
-python src/main.py
+`python src/main.py`
 如果游戏能正常启动，说明环境配置成功。
 
-🎯 场景二：队友修改代码
+###🎯 场景二：队友修改代码
 修改前：先同步最新代码
 PowerShell
 
