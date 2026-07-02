@@ -706,8 +706,15 @@ class Game:
                 
                 # 对于直接碰撞的敌人，进行常规碰撞检测
                 if player_rect.colliderect(enemy.rect):
-                    # 进行像素级碰撞检测
-                    if apply_mask_collision(self.player, enemy):
+                    # 像素级碰撞检测
+                    # 玩家 rect 停在屏幕中心(相机跟随玩家)，而 enemy.rect 在世界坐标，
+                    # 直接用 apply_mask_collision 会按屏幕坐标算 mask 偏移导致永远不重叠，
+                    # 所以临时把玩家 rect 换成世界坐标的 player_rect 再检测。
+                    saved_rect = self.player.rect
+                    self.player.rect = player_rect
+                    collided = apply_mask_collision(self.player, enemy)
+                    self.player.rect = saved_rect
+                    if collided:
                         # 玩家与敌人碰撞，立即造成伤害
                         damage_amount = enemy.damage
                         if self.player.take_damage(damage_amount):
