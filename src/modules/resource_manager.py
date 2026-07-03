@@ -390,8 +390,7 @@ class ResourceManager:
         map_bgm_mapping = {
             "simple_map": "forest",
             "ocean_map": "ocean",
-            "desert_map": "desert",
-            "cave_map": "cave",
+            "volcano_map": "volcano",
         }
         
         bgm_name = map_bgm_mapping.get(map_name)

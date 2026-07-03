@@ -19,10 +19,8 @@ music/
 │   │   └── forest.mp3     # 森林地图背景音乐（可选）
 │   ├── ocean/             # 海洋地图背景音乐
 │   │   └── ocean.mp3      # 海洋地图背景音乐（可选）
-│   ├── desert/            # 沙漠地图背景音乐
-│   │   └── desert.mp3     # 沙漠地图背景音乐（可选）
-│   └── cave/              # 洞穴地图背景音乐
-│       └── cave.mp3       # 洞穴地图背景音乐（可选）
+│   └── volcano/           # 火山地图背景音乐
+│       └── volcano.mp3    # 火山地图背景音乐（可选）
 ├── sfx/          # 音效
 │   ├── hit.wav       # 击中敌人
 │   ├── enemy_death.wav  # 敌人死亡
@@ -45,8 +43,7 @@ music/
 每个地图可以有自己独特的背景音乐：
 - 森林地图：放入 bgm/forest/forest.mp3
 - 海洋地图：放入 bgm/ocean/ocean.mp3
-- 沙漠地图：放入 bgm/desert/desert.mp3
-- 洞穴地图：放入 bgm/cave/cave.mp3
+- 火山地图：放入 bgm/volcano/volcano.mp3
 
 如果地图特定文件夹中没有音乐文件，游戏会使用默认的 background.mp3。
 
