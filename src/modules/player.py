@@ -217,6 +217,14 @@ class Player(pygame.sprite.Sprite):
         # 更新遮罩
         self.update_mask()
         
+        # 处理减速效果恢复
+        if hasattr(self, 'slow_timer') and self.slow_timer > 0:
+            self.slow_timer -= dt
+            if self.slow_timer <= 0:
+                if hasattr(self.movement, 'original_speed'):
+                    self.movement.speed = self.movement.original_speed
+                delattr(self, 'slow_timer')
+        
     def update_mask(self):
         """更新精灵遮罩"""
         self.mask = pygame.mask.from_surface(self.image)

@@ -1,7 +1,7 @@
 import pygame
 import random
 import math
-from .types import Ghost, Radish, Bat, Slime, Skeleton
+from .types import Ghost, Radish, Bat, Slime, Skeleton, Skt, Bsl, Xiniu, Ap, Plant, Fly
 
 class EnemyManager:
     def __init__(self):
@@ -56,6 +56,18 @@ class EnemyManager:
             enemy = Slime(x, y, enemy_type, self.difficulty, self.difficulty_level)
         elif enemy_type == 'boss1':
             enemy = Skeleton(x, y, enemy_type, self.difficulty, self.difficulty_level)
+        elif enemy_type == 'skt':
+            enemy = Skt(x, y, enemy_type, self.difficulty, self.difficulty_level)
+        elif enemy_type == 'bsl':
+            enemy = Bsl(x, y, enemy_type, self.difficulty, self.difficulty_level)
+        elif enemy_type == 'xiniu':
+            enemy = Xiniu(x, y, enemy_type, self.difficulty, self.difficulty_level)
+        elif enemy_type == 'ap':
+            enemy = Ap(x, y, enemy_type, self.difficulty, self.difficulty_level)
+        elif enemy_type == 'plant':
+            enemy = Plant(x, y, enemy_type, self.difficulty, self.difficulty_level)
+        elif enemy_type == 'fly':
+            enemy = Fly(x, y, enemy_type, self.difficulty, self.difficulty_level)
             
         # 如果指定了生命值，覆盖配置的生命值
         if enemy and health is not None:
@@ -165,7 +177,7 @@ class EnemyManager:
         elif self.game_time < 10:
             self.spawn_enemy('slime', x, y)
         else:
-            enemy_type = random.choice(['ghost', 'radish', 'slime'])
+            enemy_type = random.choice(['ghost', 'radish', 'slime', 'skt', 'bsl', 'xiniu', 'ap', 'plant', 'fly'])
             self.spawn_enemy(enemy_type, x, y)
             
     def set_difficulty(self, difficulty):
