@@ -27,9 +27,9 @@ DIFFICULTY_MULTIPLIERS = {
 
 # 敌人等级系数 (游戏时间增加时应用)
 LEVEL_SCALING = {
-    "health_per_level": 0.02,  # 每级增加10%生命值
+    "health_per_level": 0,  # 每级不增加生命值
     "damage_per_level": 0.05,  # 每级增加5%伤害
-    "speed_per_level": 0.02,   # 每级增加2%速度
+    "speed_per_level": 0.05,   # 每级增加5%速度
 }
 
 # 敌人基础配置

@@ -158,7 +158,7 @@ class EnemyManager:
             self.boss1_spawn_count += 1
             base_health = 500
             base_damage = 40
-            multiplier = 1.5 ** (self.boss1_spawn_count - 1)
+            multiplier = 1 + (self.boss1_spawn_count - 1) * 0.3
             health = int(base_health * multiplier)
             damage = int(base_damage * multiplier)
             self.spawn_enemy('boss1', x, y, health=health, damage=damage)

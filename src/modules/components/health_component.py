@@ -99,8 +99,7 @@ class HealthComponent(Component):
                 self.on_death()
         else:
             # 激活无敌时间
-            # [临时测试] 注销无敌帧，验证近战碰撞伤害。恢复时取消下面这行的注释即可
-            # self.start_invincibility(self.invincible_duration)
+            self.start_invincibility(self.invincible_duration)
 
             # 触发受伤回调
             if self.on_damaged:

@@ -93,22 +93,22 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="迅捷",
                         level=1,
-                        effects={'speed': 0.1},
-                        description="移动速度提升10%",
-                        icon_path="images/passives/speed_up_32x32.png"
-                    ),
-                    PassiveUpgradeLevel(
-                        name="迅捷",
-                        level=2,
                         effects={'speed': 0.2},
                         description="移动速度提升20%",
                         icon_path="images/passives/speed_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="迅捷",
+                        level=2,
+                        effects={'speed': 0.4},
+                        description="移动速度提升40%",
+                        icon_path="images/passives/speed_up_32x32.png"
+                    ),
+                    PassiveUpgradeLevel(
+                        name="迅捷",
                         level=3,
-                        effects={'speed': 0.3},
-                        description="移动速度提升30%",
+                        effects={'speed': 0.6},
+                        description="移动速度提升60%",
                         icon_path="images/passives/speed_up_32x32.png"
                     )
                 ]
@@ -174,22 +174,22 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="攻击力",
                         level=1,
-                        effects={'attack_power': 0.1},
-                        description="攻击力提升10%",
+                        effects={'attack_power': 0.5},
+                        description="攻击力提升50%",
                         icon_path="images/passives/damage_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="攻击力",
                         level=2,
-                        effects={'attack_power': 0.2},
-                        description="攻击力提升20%",
+                        effects={'attack_power': 1.0},
+                        description="攻击力提升100%",
                         icon_path="images/passives/damage_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="攻击力",
                         level=3,
-                        effects={'attack_power': 0.3},
-                        description="攻击力提升30%",
+                        effects={'attack_power': 2.0},
+                        description="攻击力提升200%",
                         icon_path="images/passives/damage_up_32x32.png"
                     )
                 ]
@@ -201,14 +201,14 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="防御力",
                         level=1,
-                        effects={'defense': 0.1},
-                        description="防御力提升10%",
+                        effects={'defense': 0.5},
+                        description="防御力提升50%",
                         icon_path="images/passives/defense_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="防御力",
                         level=2,
-                        effects={'defense': 0.2},
+                        effects={'defense': 1.0},
                         description="防御力提升20%",
                         icon_path="images/passives/defense_up_32x32.png"
                     ),
@@ -228,22 +228,22 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="拾取范围",
                         level=1,
-                        effects={'pickup_range': 25},
-                        description="拾取范围增加25",
+                        effects={'pickup_range': 100},
+                        description="拾取范围增加100",
                         icon_path="images/passives/absorb_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="拾取范围",
                         level=2,
-                        effects={'pickup_range': 50},
-                        description="拾取范围增加50",
+                        effects={'pickup_range': 200},
+                        description="拾取范围增加200",
                         icon_path="images/passives/absorb_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="拾取范围",
                         level=3,
-                        effects={'pickup_range': 100},
-                        description="拾取范围增加100",
+                        effects={'pickup_range': 1000},
+                        description="拾取范围增加1000",
                         icon_path="images/passives/absorb_up_32x32.png"
                     )
                 ]
