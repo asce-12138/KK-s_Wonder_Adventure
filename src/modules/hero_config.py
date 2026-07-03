@@ -49,7 +49,7 @@ HERO_CONFIGS = {
     "ninja_frog": DEFAULT_HERO_CONFIG,
     
     "kk": {
-        "name": "KK 跑者",
+        "name": "KK ",
         "description": "使用KK_RUN跑步精灵图的敏捷型英雄",
         "animations": {
             "idle": {
@@ -88,49 +88,9 @@ HERO_CONFIGS = {
         "starting_weapon": "knife",
         "unlock_condition": None  # 默认解锁
     },
-
-    "masked_dude": {
-        "name": "蒙面客",
-        "description": "高速度，低血量的敏捷型英雄",
-        "animations": {
-            "idle": {
-                "sprite_sheet": "images/player/Masked_Dude_Idle_32x32.png",
-                "frame_count": 11,
-                "frame_duration": 0.0333,
-                "frame_width": 32,
-                "frame_height": 32
-            },
-            "run": {
-                "sprite_sheet": "images/player/Masked_Dude_Run_32x32.png",
-                "frame_count": 12,
-                "frame_duration": 0.0333,
-                "frame_width": 32,
-                "frame_height": 32
-            },
-            "hurt": {
-                "sprite_sheet": "images/player/Masked_Dude_Hit_32x32.png",
-                "frame_count": 7,
-                "frame_duration": 0.0333,
-                "frame_width": 32,
-                "frame_height": 32
-            }
-        },
-        "base_stats": {
-            "max_health": 80,
-            "speed": 250,
-            "defense": 0,
-            "health_regen": 0,
-            "exp_multiplier": 1.0,
-            "pickup_range": 60,
-            "attack_power": 0.9,
-            "luck": 1.2
-        },
-        "starting_weapon": "fireball",
-        "unlock_condition": "reach_level_10"  # 达到10级解锁
-    },
     
     "pink_man": {
-        "name": "少萝莉魔法师",
+        "name": "少萝",
         "description": "精通元素魔法的小萝莉，攻击范围广",
         "scale_factor": 1.5,
         "animations": {

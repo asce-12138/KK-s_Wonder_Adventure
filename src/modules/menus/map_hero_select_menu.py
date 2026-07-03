@@ -82,8 +82,7 @@ class MapHeroSelectMenu:
         self.maps = [
             {"id": "simple_map", "name": "森林", "unlocked": True},
             {"id": "ocean_map", "name": "海洋", "unlocked": True},
-            {"id": "desert_map", "name": "沙漠", "unlocked": False},
-            {"id": "cave_map", "name": "洞穴", "unlocked": False},
+            {"id": "volcano_map", "name": "火山", "unlocked": True},
         ]
         
         # 从hero_config动态加载英雄数据
@@ -116,10 +115,8 @@ class MapHeroSelectMenu:
                     image.fill((100, 180, 100))  # 绿色代表森林
                     if map_id == "ocean_map":
                         image.fill((50, 150, 220))  # 蓝色代表海洋
-                    elif map_id == "desert_map":
-                        image.fill((220, 180, 100))  # 黄色代表沙漠
-                    elif map_id == "cave_map":
-                        image.fill((100, 100, 150))  # 蓝灰色代表洞穴
+                    elif map_id == "volcano_map":
+                        image.fill((200, 80, 50))  # 红色代表火山
                     
                     # 在图像上绘制地图名称
                     name_text = self.small_font.render(map_data["name"], True, (255, 255, 255))
