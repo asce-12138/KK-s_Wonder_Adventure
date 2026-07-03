@@ -22,8 +22,8 @@ class ProgressionSystem(Component):
         # 经验和等级
         self.level = 1
         self.experience = 0
-        self.exp_to_next_level = 300  # 初始经验需求从100提高到300
-        self.exp_growth_rate = 1.5     # 每级经验增长率从1.2提高到1.5
+        self.exp_to_next_level = 200
+        self.exp_growth_rate = 1.3
         
         # 经验值倍率
         self.base_exp_multiplier = base_exp_multiplier

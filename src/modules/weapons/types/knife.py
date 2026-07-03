@@ -107,6 +107,38 @@ class Knife(Weapon):
         # 加载攻击音效
         resource_manager.load_sound('knife_throw', 'music/sfx/weapons/knife_throw.wav')
         
+    def get_mouse_direction(self):
+        """获取鼠标方向向量"""
+        # 获取屏幕对象
+        screen = pygame.display.get_surface()
+        
+        # 获取屏幕中心位置
+        screen_center_x = screen.get_width() // 2
+        screen_center_y = screen.get_height() // 2
+        
+        # 获取鼠标位置
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        
+        # 计算鼠标相对于屏幕中心的偏移
+        offset_x = mouse_x - screen_center_x
+        offset_y = mouse_y - screen_center_y
+        
+        # 计算方向向量（从玩家指向鼠标）
+        direction_x = offset_x
+        direction_y = offset_y
+        
+        # 标准化方向向量
+        magnitude = math.sqrt(direction_x ** 2 + direction_y ** 2)
+        if magnitude > 0:
+            direction_x /= magnitude
+            direction_y /= magnitude
+        else:
+            # 如果鼠标在屏幕中心，默认朝向右侧
+            direction_x = 1
+            direction_y = 0
+        
+        return direction_x, direction_y
+        
     def update(self, dt):
         super().update(dt)
         
@@ -120,7 +152,7 @@ class Knife(Weapon):
         
     def throw_knives(self):
         """投掷小刀"""
-        direction_x, direction_y = self.get_player_direction()
+        direction_x, direction_y = self.get_mouse_direction()
         knives_count = int(self.current_stats[WeaponStatType.PROJECTILES_PER_CAST])
         
         if knives_count > 1:

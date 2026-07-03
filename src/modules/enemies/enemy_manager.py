@@ -7,7 +7,7 @@ class EnemyManager:
     def __init__(self):
         self.enemies = []
         self.spawn_timer = 0
-        self.spawn_interval = 1.0  # 每秒生成一个敌人
+        self.spawn_interval = 3.0  # 每秒生成一个敌人
         self.difficulty = "normal"  # 默认难度为normal
         self.difficulty_level = 1   # 难度等级，随游戏时间增长
         self.game_time = 0  # 游戏进行时间
@@ -170,7 +170,7 @@ class EnemyManager:
             self.boss1_spawn_count += 1
             base_health = 500
             base_damage = 40
-            multiplier = 1.5 ** (self.boss1_spawn_count - 1)
+            multiplier = 1 + (self.boss1_spawn_count - 1) * 0.3
             health = int(base_health * multiplier)
             damage = int(base_damage * multiplier)
             self.spawn_enemy('boss1', x, y, health=health, damage=damage)

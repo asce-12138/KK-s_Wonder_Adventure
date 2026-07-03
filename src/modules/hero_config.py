@@ -32,7 +32,7 @@ DEFAULT_HERO_CONFIG = {
     },
     "base_stats": {
         "max_health": 100,
-        "speed": 200,
+        "speed": 250,
         "defense": 0,
         "health_regen": 0,
         "exp_multiplier": 1.0,
@@ -80,7 +80,7 @@ HERO_CONFIGS = {
             "defense": 0,
             "health_regen": 0.2,
             "exp_multiplier": 1.0,
-            "pickup_range": 60,
+            "pickup_range": 100,
             "attack_power": 1.0,
             "luck": 1.1
         },
@@ -94,23 +94,23 @@ HERO_CONFIGS = {
         "description": "高速度，低血量的敏捷型英雄",
         "animations": {
             "idle": {
-                "sprite_sheet": "images/player/kk.png",
-                "frame_count": 1,
-                "frame_duration": 0.1,
+                "sprite_sheet": "images/player/Masked_Dude_Idle_32x32.png",
+                "frame_count": 11,
+                "frame_duration": 0.0333,
                 "frame_width": 32,
                 "frame_height": 32
             },
             "run": {
-                "sprite_sheet": "images/player/kk.png",
-                "frame_count": 1,
-                "frame_duration": 0.1,
+                "sprite_sheet": "images/player/Masked_Dude_Run_32x32.png",
+                "frame_count": 12,
+                "frame_duration": 0.0333,
                 "frame_width": 32,
                 "frame_height": 32
             },
             "hurt": {
-                "sprite_sheet": "images/player/kk.png",
-                "frame_count": 1,
-                "frame_duration": 0.1,
+                "sprite_sheet": "images/player/Masked_Dude_Hit_32x32.png",
+                "frame_count": 7,
+                "frame_duration": 0.0333,
                 "frame_width": 32,
                 "frame_height": 32
             }
@@ -130,20 +130,21 @@ HERO_CONFIGS = {
     },
     
     "pink_man": {
-        "name": "粉红侠",
-        "description": "高防御，高生命值的坦克型英雄",
+        "name": "少萝莉魔法师",
+        "description": "精通元素魔法的小萝莉，攻击范围广",
+        "scale_factor": 1.5,
         "animations": {
             "idle": {
-                "sprite_sheet": "images/player/Pink_Man_Idle_32x32.png",
-                "frame_count": 11,
+                "sprite_sheet": "images/player/Loli_Mage_Idle_32x32.png",
+                "frame_count": 1,
                 "frame_duration": 0.0333,
                 "frame_width": 32,
                 "frame_height": 32
             },
             "run": {
-                "sprite_sheet": "images/player/Pink_Man_Run_32x32.png",
-                "frame_count": 12,
-                "frame_duration": 0.0333,
+                "sprite_sheet": "images/player/Loli_Mage_Run_32x32.png",
+                "frame_count": 4,
+                "frame_duration": 0.15,
                 "frame_width": 32,
                 "frame_height": 32
             },
@@ -152,21 +153,21 @@ HERO_CONFIGS = {
                 "frame_count": 7,
                 "frame_duration": 0.0333,
                 "frame_width": 32,
-                "frame_height": 32
+                "frame_height": 32  
             }
         },
         "base_stats": {
-            "max_health": 120,
-            "speed": 180,
-            "defense": 0.2,
-            "health_regen": 0.5,
-            "exp_multiplier": 0.9,
+            "max_health": 100,
+            "speed": 200,
+            "defense": 0.1,
+            "health_regen": 0.6,
+            "exp_multiplier": 1.1,
             "pickup_range": 40,
-            "attack_power": 1.1,
-            "luck": 0.8
+            "attack_power": 1.2,
+            "luck": 1.1
         },
-        "starting_weapon": "frost_nova",
-        "unlock_condition": "collect_1000_coins"  # 收集1000金币解锁
+        "starting_weapon": "fireball",
+        "unlock_condition": "collect_1000_coins"
     }
 }
 

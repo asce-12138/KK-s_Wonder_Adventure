@@ -27,9 +27,9 @@ DIFFICULTY_MULTIPLIERS = {
 
 # 敌人等级系数 (游戏时间增加时应用)
 LEVEL_SCALING = {
-    "health_per_level": 0.1,  # 每级增加10%生命值
+    "health_per_level": 0,  # 每级不增加生命值
     "damage_per_level": 0.05,  # 每级增加5%伤害
-    "speed_per_level": 0.02,   # 每级增加2%速度
+    "speed_per_level": 0.05,   # 每级增加5%速度
 }
 
 # 敌人基础配置
@@ -58,7 +58,7 @@ ENEMY_CONFIGS = {
     "bat": {
         "health": 60,
         "damage": 20,           # 基础伤害（从8提高到20）
-        "speed": 160,
+        "speed": 200,
         "score_value": 80,
         "animation_speed": 0.0333,
         "scale": 2.0,
@@ -80,10 +80,10 @@ ENEMY_CONFIGS = {
     
     # boss1 - Boss级敌人，每5次生成一次，数值很高
     "boss1": {
-        "health": 100,
+        "health": 200,
         "damage": 50,          # 基础伤害（从80提高到150）
         "speed": 150,
-        "score_value": 100,
+        "score_value": 200,
         "animation_speed": 0.0333,
         "scale": 1.5,
     },

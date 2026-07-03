@@ -11,12 +11,12 @@ WEAPONS_CONFIG = {
     'knife': {
         'name': '飞刀',
         'icon_path': 'images/weapons/knife_32x32.png',
-        'max_level': 3,
+        'max_level': 5,
         'levels': [
             {
                 'level': 1,
                 'effects': {
-                    WeaponStatType.DAMAGE: 200,
+                    WeaponStatType.DAMAGE: 40,
                     WeaponStatType.ATTACK_SPEED: 1.0,
                     WeaponStatType.PROJECTILE_SPEED: 400,
                     WeaponStatType.CAN_PENETRATE: False,
@@ -29,21 +29,21 @@ WEAPONS_CONFIG = {
             {
                 'level': 2,
                 'effects': {
-                    WeaponStatType.DAMAGE: 20,
-                    WeaponStatType.ATTACK_SPEED: 1.1,
+                    WeaponStatType.DAMAGE: 40,
+                    WeaponStatType.ATTACK_SPEED: 1.5,
                     WeaponStatType.PROJECTILE_SPEED: 400,
                     WeaponStatType.CAN_PENETRATE: False,
                     WeaponStatType.PROJECTILES_PER_CAST: 2,
                     WeaponStatType.SPREAD_ANGLE: 15,
                     WeaponStatType.LIFETIME: 3.0
                 },
-                'description': '同时发射两把飞刀，呈扇形分布'
+                'description': '攻速+50%，同时发射两把飞刀'
             },
             {
                 'level': 3,
                 'effects': {
-                    WeaponStatType.DAMAGE: 30,
-                    WeaponStatType.ATTACK_SPEED: 1.25,
+                    WeaponStatType.DAMAGE: 60,
+                    WeaponStatType.ATTACK_SPEED: 2.25,
                     WeaponStatType.PROJECTILE_SPEED: 400,
                     WeaponStatType.CAN_PENETRATE: True,
                     WeaponStatType.PROJECTILES_PER_CAST: 2,
@@ -52,19 +52,50 @@ WEAPONS_CONFIG = {
                     WeaponStatType.MAX_PENETRATION: 10,
                     WeaponStatType.PENETRATION_DAMAGE_REDUCTION: 0.2
                 },
-                'description': '飞刀可以穿透敌人，伤害提升'
+                'description': '攻速+125%，飞刀可以穿透敌人'
+            },
+            {
+                'level': 4,
+                'effects': {
+                    WeaponStatType.DAMAGE: 80,
+                    WeaponStatType.ATTACK_SPEED: 3.375,
+                    WeaponStatType.PROJECTILE_SPEED: 400,
+                    WeaponStatType.CAN_PENETRATE: True,
+                    WeaponStatType.PROJECTILES_PER_CAST: 3,
+                    WeaponStatType.SPREAD_ANGLE: 20,
+                    WeaponStatType.LIFETIME: 3.0,
+                    WeaponStatType.MAX_PENETRATION: 10,
+                    WeaponStatType.PENETRATION_DAMAGE_REDUCTION: 0.2
+                },
+                'description': '攻速+237.5%，同时发射三把飞刀'
+            },
+            {
+                'level': 5,
+                'effects': {
+                    WeaponStatType.DAMAGE: 100,
+                    WeaponStatType.ATTACK_SPEED: 5.0625,
+                    WeaponStatType.PROJECTILE_SPEED: 400,
+                    WeaponStatType.CAN_PENETRATE: True,
+                    WeaponStatType.PROJECTILES_PER_CAST: 3,
+                    WeaponStatType.SPREAD_ANGLE: 20,
+                    WeaponStatType.LIFETIME: 3.0,
+                    WeaponStatType.MAX_PENETRATION: 20,
+                    WeaponStatType.PENETRATION_DAMAGE_REDUCTION: 0.1
+                },
+                'description': '攻速+406%，穿透次数翻倍'
             }
         ]
     },
     'fireball': {
         'name': '火球术',
         'icon_path': 'images/weapons/fireball_32x32.png',
-        'max_level': 3,
+        'max_level': 5,
         'levels': [
             {
                 'level': 1,
                 'effects': {
                     WeaponStatType.DAMAGE: 25,
+                    WeaponStatType.ATTACK_SPEED: 1.0,
                     WeaponStatType.EXPLOSION_RADIUS: 60,
                     WeaponStatType.BURN_DURATION: 3,
                     WeaponStatType.BURN_DAMAGE: 5,
@@ -76,35 +107,62 @@ WEAPONS_CONFIG = {
                 'level': 2,
                 'effects': {
                     WeaponStatType.DAMAGE: 25,
+                    WeaponStatType.ATTACK_SPEED: 1.5,
                     WeaponStatType.EXPLOSION_RADIUS: 70,
                     WeaponStatType.BURN_DURATION: 4,
                     WeaponStatType.BURN_DAMAGE: 8,
                     WeaponStatType.COOLDOWN: 1.5
                 },
-                'description': '增加爆炸范围和燃烧伤害'
+                'description': '攻速+50%，增加爆炸范围和燃烧伤害'
             },
             {
                 'level': 3,
                 'effects': {
                     WeaponStatType.DAMAGE: 35,
+                    WeaponStatType.ATTACK_SPEED: 2.25,
                     WeaponStatType.EXPLOSION_RADIUS: 80,
                     WeaponStatType.BURN_DURATION: 5,
                     WeaponStatType.BURN_DAMAGE: 10,
                     WeaponStatType.COOLDOWN: 1.2
                 },
-                'description': '提升伤害和燃烧效果，减少冷却时间'
+                'description': '攻速+125%，提升伤害和燃烧效果'
+            },
+            {
+                'level': 4,
+                'effects': {
+                    WeaponStatType.DAMAGE: 45,
+                    WeaponStatType.ATTACK_SPEED: 3.375,
+                    WeaponStatType.EXPLOSION_RADIUS: 90,
+                    WeaponStatType.BURN_DURATION: 6,
+                    WeaponStatType.BURN_DAMAGE: 15,
+                    WeaponStatType.COOLDOWN: 1.0
+                },
+                'description': '攻速+237.5%，爆炸范围和燃烧进一步提升'
+            },
+            {
+                'level': 5,
+                'effects': {
+                    WeaponStatType.DAMAGE: 60,
+                    WeaponStatType.ATTACK_SPEED: 5.0625,
+                    WeaponStatType.EXPLOSION_RADIUS: 100,
+                    WeaponStatType.BURN_DURATION: 8,
+                    WeaponStatType.BURN_DAMAGE: 20,
+                    WeaponStatType.COOLDOWN: 0.8
+                },
+                'description': '攻速+406%，终极火球术'
             }
         ]
     },
     'frost_nova': {
         'name': '冰锥术',
         'icon_path': 'images/weapons/nova_32x32.png',
-        'max_level': 3,
+        'max_level': 5,
         'levels': [
             {
                 'level': 1,
                 'effects': {
                     WeaponStatType.DAMAGE: 25,
+                    WeaponStatType.ATTACK_SPEED: 1.0,
                     WeaponStatType.EXPLOSION_RADIUS: 60,
                     WeaponStatType.FREEZE_DURATION: 3,
                     WeaponStatType.SLOW_PERCENT: 50,
@@ -116,23 +174,49 @@ WEAPONS_CONFIG = {
                 'level': 2,
                 'effects': {
                     WeaponStatType.DAMAGE: 25,
+                    WeaponStatType.ATTACK_SPEED: 1.5,
                     WeaponStatType.EXPLOSION_RADIUS: 70,
                     WeaponStatType.FREEZE_DURATION: 4,
                     WeaponStatType.SLOW_PERCENT: 50,
                     WeaponStatType.COOLDOWN: 1.5
                 },
-                'description': '造成爆炸范围和减速'
+                'description': '攻速+50%，造成爆炸范围和减速'
             },
             {
                 'level': 3,
                 'effects': {
                     WeaponStatType.DAMAGE: 35,
+                    WeaponStatType.ATTACK_SPEED: 2.25,
                     WeaponStatType.EXPLOSION_RADIUS: 80,
                     WeaponStatType.FREEZE_DURATION: 5,
                     WeaponStatType.SLOW_PERCENT: 50,
                     WeaponStatType.COOLDOWN: 1.2
                 },
-                'description': '提升伤害和减速效果，减少冷却时间'
+                'description': '攻速+125%，提升伤害和减速效果'
+            },
+            {
+                'level': 4,
+                'effects': {
+                    WeaponStatType.DAMAGE: 45,
+                    WeaponStatType.ATTACK_SPEED: 3.375,
+                    WeaponStatType.EXPLOSION_RADIUS: 90,
+                    WeaponStatType.FREEZE_DURATION: 6,
+                    WeaponStatType.SLOW_PERCENT: 50,
+                    WeaponStatType.COOLDOWN: 1.0
+                },
+                'description': '攻速+237.5%，减速效果延长'
+            },
+            {
+                'level': 5,
+                'effects': {
+                    WeaponStatType.DAMAGE: 60,
+                    WeaponStatType.ATTACK_SPEED: 5.0625,
+                    WeaponStatType.EXPLOSION_RADIUS: 100,
+                    WeaponStatType.FREEZE_DURATION: 8,
+                    WeaponStatType.SLOW_PERCENT: 50,
+                    WeaponStatType.COOLDOWN: 0.8
+                },
+                'description': '攻速+406%，终极冰锥术'
             }
         ]
     }
