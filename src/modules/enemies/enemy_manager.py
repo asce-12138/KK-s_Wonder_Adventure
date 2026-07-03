@@ -17,6 +17,7 @@ class EnemyManager:
         
         # 地图边界相关
         self.map_boundaries = None  # (min_x, min_y, max_x, max_y)
+        self.current_map = None  # 当前地图名称
         
     def set_map_boundaries(self, min_x, min_y, max_x, max_y):
         """设置地图边界
@@ -28,6 +29,10 @@ class EnemyManager:
             max_y: 最大Y坐标
         """
         self.map_boundaries = (min_x, min_y, max_x, max_y)
+        
+    def set_current_map(self, map_name):
+        """设置当前地图名称"""
+        self.current_map = map_name
         
     def spawn_enemy(self, enemy_type, x, y, health=None, damage=None):
         """在指定位置生成指定类型和生命值的敌人
@@ -177,7 +182,10 @@ class EnemyManager:
         elif self.game_time < 10:
             self.spawn_enemy('slime', x, y)
         else:
-            enemy_type = random.choice(['ghost', 'radish', 'slime', 'skt', 'bsl', 'xiniu', 'ap', 'plant', 'fly'])
+            if self.current_map == 'ocean_map':
+                enemy_type = random.choice(['bsl', 'fly', 'xiniu'])
+            else:
+                enemy_type = random.choice(['ghost', 'radish', 'slime'])
             self.spawn_enemy(enemy_type, x, y)
             
     def set_difficulty(self, difficulty):

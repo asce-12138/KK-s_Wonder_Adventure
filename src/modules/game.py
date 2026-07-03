@@ -100,6 +100,7 @@ class Game:
         # 设置敌人生成边界
         if self.enemy_manager:
             self.enemy_manager.set_map_boundaries(min_x, min_y, max_x, max_y)
+            self.enemy_manager.set_current_map(self.current_map)
             
     def _set_player_boundaries(self):
         """设置玩家的移动边界
