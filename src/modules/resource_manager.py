@@ -231,6 +231,30 @@ class ResourceManager:
             pygame.mixer.music.load(music_path)
             pygame.mixer.music.play(loops)
             
+    def play_map_music(self, map_name: str, loops: int = -1):
+        """播放地图特定的背景音乐
+        
+        如果地图有特定的背景音乐则播放，否则播放默认背景音乐
+        
+        Args:
+            map_name: 地图名称
+            loops: 循环次数,-1表示无限循环
+        """
+        if not pygame.mixer.get_init():
+            return
+            
+        map_music_path = self._find_map_music_file(map_name)
+        if map_music_path:
+            map_music_name = f"map_{map_name}"
+            full_path = self.load_music(map_music_name, map_music_path)
+            if full_path:
+                pygame.mixer.music.load(full_path)
+                pygame.mixer.music.play(loops)
+            else:
+                self.play_music("background", loops)
+        else:
+            self.play_music("background", loops)
+            
     def stop_music(self):
         """停止当前播放的音乐"""
         if not pygame.mixer.get_init():
@@ -353,6 +377,34 @@ class ResourceManager:
             if os.path.exists(full_path):
                 return file_path
         return None
+        
+    def _find_map_music_file(self, map_name):
+        """查找地图特定的背景音乐文件
+        
+        Args:
+            map_name: 地图名称（如 simple_map, ocean_map）
+            
+        Returns:
+            str: 找到的音乐文件相对路径，如果没有找到返回None
+        """
+        map_bgm_mapping = {
+            "simple_map": "forest",
+            "ocean_map": "ocean",
+            "desert_map": "desert",
+            "cave_map": "cave",
+        }
+        
+        bgm_name = map_bgm_mapping.get(map_name)
+        if bgm_name:
+            folder_path = f"music/bgm/{bgm_name}"
+            full_folder_path = os.path.join(self.resource_dir, folder_path)
+            if os.path.exists(full_folder_path):
+                for fmt in ["mp3", "wav", "ogg", "flac"]:
+                    file_path = f"{folder_path}/{bgm_name}.{fmt}"
+                    full_path = os.path.join(self.resource_dir, file_path)
+                    if os.path.exists(full_path):
+                        return file_path
+        return None
     
     def _find_sound_file(self, base_name, subfolder="sfx"):
         """查找音效文件，支持多种格式
@@ -400,7 +452,7 @@ class ResourceManager:
         self.load_sound("menu_show", self._find_sound_file("menu_show"))
         
         # 设置音量
-        self.set_music_volume(0.5)  # 背景音乐音量
+        self.set_music_volume(0.8)  # 背景音乐音量
 
 # 创建全局资源管理器实例
 resource_manager = ResourceManager() 
