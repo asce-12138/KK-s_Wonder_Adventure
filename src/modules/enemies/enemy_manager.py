@@ -7,7 +7,7 @@ class EnemyManager:
     def __init__(self):
         self.enemies = []
         self.spawn_timer = 0
-        self.spawn_interval = 1.0  # 每秒生成一个敌人
+        self.spawn_interval = 3.0  # 每秒生成一个敌人
         self.difficulty = "normal"  # 默认难度为normal
         self.difficulty_level = 1   # 难度等级，随游戏时间增长
         self.game_time = 0  # 游戏进行时间
