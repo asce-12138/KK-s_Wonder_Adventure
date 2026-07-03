@@ -111,8 +111,8 @@ ENEMY_CONFIGS = {
         "score_value": 250,
         "animation_speed": 0.0333,
         "scale": 1.0,
-        "visibility_range": 100,
-        "visibility_fade_range": 33,
+        "visibility_range": 150,
+        "visibility_fade_range": 50,
     },
     
     # xiniu - 疾跑敌人，靠近玩家时加速奔跑
@@ -136,7 +136,7 @@ ENEMY_CONFIGS = {
         "animation_speed": 0.0333,
         "scale": 1.0,
         "enrage_damage_multiplier": 2.0,
-        "enrage_speed_multiplier": 1.5,
+        "enrage_speed_multiplier": 2.0,
     },
     
     # plant - 固定炮台敌人，不移动，根据距离发射不同弹幕

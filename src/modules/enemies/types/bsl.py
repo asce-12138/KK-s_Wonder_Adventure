@@ -40,11 +40,11 @@ class Bsl(Enemy):
                 frame_count=13, row=0,
                 frame_duration=animation_speed
             ),
-            'attack': resource_manager.create_animation(
-                'bsl_attack', attack_spritesheet,
+            'run': resource_manager.create_animation(
+                'bsl_run', attack_spritesheet,
                 frame_width=84, frame_height=38,
                 frame_count=10, row=0,
-                frame_duration=animation_speed
+                frame_duration=animation_speed * 0.7
             ),
             'hurt': resource_manager.create_animation(
                 'bsl_hurt', hit_spritesheet,
@@ -66,18 +66,21 @@ class Bsl(Enemy):
         if self.current_animation in self.animations:
             self.animations[self.current_animation].update(dt)
 
-        if self.hurt_timer > 0:
-            self.hurt_timer -= dt
-            if self.hurt_timer <= 0:
-                self.current_animation = 'idle'
-                if self.current_animation in self.animations:
-                    self.animations[self.current_animation].reset()
-
         dx = player.world_x - self.rect.x
         dy = player.world_y - self.rect.y
         distance = math.sqrt(dx * dx + dy * dy)
 
         self.facing_right = dx > 0
+
+        if self.hurt_timer > 0:
+            self.hurt_timer -= dt
+            if self.hurt_timer <= 0:
+                if distance != 0:
+                    self.current_animation = 'run'
+                else:
+                    self.current_animation = 'idle'
+                if self.current_animation in self.animations:
+                    self.animations[self.current_animation].reset()
 
         if distance != 0:
             dx = dx / distance
@@ -87,16 +90,10 @@ class Bsl(Enemy):
             self.rect.y += dy * self.speed * dt
 
             if self.hurt_timer <= 0:
-                if distance < self.visibility_range * 0.5:
-                    if self.current_animation != 'attack':
-                        self.current_animation = 'attack'
-                        if self.current_animation in self.animations:
-                            self.animations[self.current_animation].reset()
-                else:
-                    if self.current_animation != 'idle':
-                        self.current_animation = 'idle'
-                        if self.current_animation in self.animations:
-                            self.animations[self.current_animation].reset()
+                if self.current_animation != 'run':
+                    self.current_animation = 'run'
+                    if self.current_animation in self.animations:
+                        self.animations[self.current_animation].reset()
 
         elif self.hurt_timer <= 0:
             if self.current_animation != 'idle':
@@ -113,6 +110,11 @@ class Bsl(Enemy):
             original_size = current_frame.get_size()
             new_size = (int(original_size[0] * self.scale), int(original_size[1] * self.scale))
             current_frame = pygame.transform.scale(current_frame, new_size)
+
+            mask = pygame.mask.from_surface(current_frame)
+            mask_outline = mask.outline()
+            
+            self.mask = mask
 
             current_frame = pygame.transform.flip(current_frame, True, False)
 
@@ -137,9 +139,6 @@ class Bsl(Enemy):
 
                 self.current_alpha = alpha
                 modified_frame.set_alpha(alpha)
-
-            mask = pygame.mask.from_surface(current_frame)
-            mask_outline = mask.outline()
 
             if 'slow' in self.status_effects:
                 slow_effect = pygame.Surface(modified_frame.get_size(), pygame.SRCALPHA)

@@ -7,13 +7,20 @@ class EnemyManager:
     def __init__(self):
         self.enemies = []
         self.spawn_timer = 0
-        self.spawn_interval = 3.0  # 每秒生成一个敌人
+        self.base_spawn_interval = 1  # 基础生成间隔
+        self.spawn_interval = 1  # 当前生成间隔
         self.difficulty = "normal"  # 默认难度为normal
         self.difficulty_level = 1   # 难度等级，随游戏时间增长
         self.game_time = 0  # 游戏进行时间
         self.bat_spawn_timer = 0  # 蝙蝠生成计时器
         self.spawn_count = 0  # 生成次数计数器
         self.boss1_spawn_count = 0  # boss1生成次数计数器
+        
+        # 时间递增难度相关
+        self.last_difficulty_time = 120  # 上次增加难度的时间（从2分钟开始）
+        self.health_multiplier = 1.0  # 血量倍率
+        self.speed_multiplier = 1.0  # 生成速度倍率
+        self.min_spawn_interval = 0.1  # 最小生成间隔（限制最大生成速度）
         
         # 地图边界相关
         self.map_boundaries = None  # (min_x, min_y, max_x, max_y)
@@ -34,7 +41,7 @@ class EnemyManager:
         """设置当前地图名称"""
         self.current_map = map_name
         
-    def spawn_enemy(self, enemy_type, x, y, health=None, damage=None):
+    def spawn_enemy(self, enemy_type, x, y, health=None, damage=None, health_multiplier=None):
         """在指定位置生成指定类型和生命值的敌人
         
         Args:
@@ -43,6 +50,7 @@ class EnemyManager:
             y: 世界坐标系中的y坐标
             health: 指定生命值，如果为None则使用该类型的默认生命值
             damage: 指定伤害值，如果为None则使用该类型的默认伤害值
+            health_multiplier: 血量倍率，应用于默认生命值
             
         Returns:
             Enemy: 生成的敌人实例
@@ -74,6 +82,11 @@ class EnemyManager:
         elif enemy_type == 'fly':
             enemy = Fly(x, y, enemy_type, self.difficulty, self.difficulty_level)
             
+        # 应用血量倍率
+        if enemy and health_multiplier is not None and health_multiplier != 1.0:
+            enemy.health = int(enemy.max_health * health_multiplier)
+            enemy.max_health = enemy.health
+            
         # 如果指定了生命值，覆盖配置的生命值
         if enemy and health is not None:
             enemy.health = health
@@ -95,21 +108,28 @@ class EnemyManager:
         # 更新难度等级（根据游戏时间）
         self.difficulty_level = max(1, int(self.game_time // 60) + 1)  # 每60秒提升一级
         
+        # 每60秒增加一次难度（从2分钟开始）
+        while self.game_time >= self.last_difficulty_time:
+            self.health_multiplier *= 1.5
+            self.speed_multiplier *= 2
+            self.spawn_interval = max(self.min_spawn_interval, self.base_spawn_interval / self.speed_multiplier)
+            self.last_difficulty_time += 60
+            
+            # 对所有已存在的敌人应用血量增加
+            for enemy in self.enemies:
+                enemy.max_health = int(enemy.max_health * 1.5)
+                enemy.health = int(enemy.health * 1.5)
+        
         # 根据时间和玩家等级生成敌人
         if self.spawn_timer >= self.spawn_interval:
             self.spawn_timer = 0
             self.random_spawn_enemy(player)
             
-        # 如果玩家等级达到5级，更新蝙蝠生成计时器
-        if player.level >= 1:
-            # 如果是刚达到5级,立即生成一只蝙蝠
-            if self.bat_spawn_timer == 0:
-                self.spawn_bat(player)
-                self.bat_spawn_timer = 0.1  # 设置一个很小的值,避免重复触发初始生成
-            
+        # 蝙蝠生成：只在森林地图生成，每60秒一只
+        if player.level >= 1 and self.current_map not in ['ocean_map', 'volcano_map']:
             self.bat_spawn_timer += dt
             if self.bat_spawn_timer >= 60:  # 每60秒生成一只蝙蝠
-                self.bat_spawn_timer = 0.1  # 重置为0.1而不是0
+                self.bat_spawn_timer = 0
                 self.spawn_bat(player)
             
         # 更新所有敌人
@@ -168,25 +188,13 @@ class EnemyManager:
         
         self.spawn_count += 1
         
-        max_boss1_count = max(1, int(self.game_time // 60) + 1)
-        current_boss1_count = sum(1 for e in self.enemies if e.type == 'boss1')
-        
-        if self.spawn_count % 5 == 0 and current_boss1_count < max_boss1_count:
-            self.boss1_spawn_count += 1
-            base_health = 500
-            base_damage = 40
-            multiplier = 1 + (self.boss1_spawn_count - 1) * 0.3
-            health = int(base_health * multiplier)
-            damage = int(base_damage * multiplier)
-            self.spawn_enemy('boss1', x, y, health=health, damage=damage)
-        elif self.game_time < 10:
-            self.spawn_enemy('slime', x, y)
+        if self.current_map == 'ocean_map':
+            enemy_type = random.choice(['fly', 'skt', 'xiniu'])
+        elif self.current_map == 'volcano_map':
+            enemy_type = random.choice(['ap', 'bsl', 'plant'])
         else:
-            if self.current_map == 'ocean_map':
-                enemy_type = random.choice(['bsl', 'fly', 'xiniu'])
-            else:
-                enemy_type = random.choice(['ghost', 'radish', 'slime'])
-            self.spawn_enemy(enemy_type, x, y)
+            enemy_type = random.choice(['ghost', 'radish', 'slime'])
+        self.spawn_enemy(enemy_type, x, y, health_multiplier=self.health_multiplier)
             
     def set_difficulty(self, difficulty):
         """设置游戏难度
@@ -195,6 +203,19 @@ class EnemyManager:
             difficulty (str): 难度级别 ('easy', 'normal', 'hard', 'nightmare')
         """
         self.difficulty = difficulty
+        
+    def recalculate_difficulty(self):
+        """根据当前游戏时间重新计算难度倍率"""
+        self.health_multiplier = 1.0
+        self.speed_multiplier = 1.0
+        self.last_difficulty_time = 120
+        
+        while self.game_time >= self.last_difficulty_time:
+            self.health_multiplier *= 1.5
+            self.speed_multiplier *= 2
+            self.last_difficulty_time += 60
+        
+        self.spawn_interval = max(self.min_spawn_interval, self.base_spawn_interval / self.speed_multiplier)
             
     def spawn_bat(self, player):
         """在玩家周围生成一个蝙蝠，确保在地图边界内"""
@@ -219,4 +240,4 @@ class EnemyManager:
                 y = max(min_y, min(y, max_y))
                 break  # 使用修正后的位置
         
-        self.spawn_enemy('bat', x, y) 
+        self.spawn_enemy('bat', x, y, health_multiplier=self.health_multiplier) 

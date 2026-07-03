@@ -77,7 +77,7 @@ class MainMenu:
             self.screen.fill((0, 0, 0))
             
         # 绘制标题
-        title_text = self.title_font.render("像素生存", True, self.title_color)
+        title_text = self.title_font.render("kk的奇妙冒险", True, self.title_color)
         title_rect = title_text.get_rect(center=(self.screen_center_x, self.title_y))
         self.screen.blit(title_text, title_rect)
         

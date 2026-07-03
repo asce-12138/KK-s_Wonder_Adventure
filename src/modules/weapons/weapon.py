@@ -56,15 +56,26 @@ class Weapon(pygame.sprite.Sprite):
         Returns:
             bool: 是否应该销毁投射物
         """
-        # 检查敌人是否处于无敌状态
-        if hasattr(enemy, 'invincible_timer') and enemy.invincible_timer > 0:
-            # 敌人处于无敌状态，不计算新的碰撞
-            return False
-            
         # 检查投射物是否有特殊的碰撞处理方法（如火球的爆炸）
         if hasattr(projectile, 'on_collision'):
             # 调用投射物自己的碰撞处理方法
             return projectile.on_collision(enemy, enemies)
+            
+        # 检查敌人是否处于无敌状态
+        if hasattr(enemy, 'invincible') and enemy.invincible:
+            # 敌人处于无敌状态，不造成伤害，但子弹仍然会被销毁（除非是穿透型子弹）
+            # 增加命中计数
+            projectile.hit_count += 1
+            
+            # 检查穿透属性
+            if not hasattr(projectile, 'can_penetrate') or not projectile.can_penetrate:
+                return True
+                
+            if projectile.hit_count < projectile.max_penetration:
+                projectile.damage *= (1 - projectile.penetration_damage_reduction)
+                return False
+                
+            return True
             
         # 默认碰撞处理逻辑
         # 造成伤害

@@ -318,6 +318,8 @@ class Game:
             # 设置敌人管理器的难度和等级
             self.enemy_manager.difficulty_level = self.level
             self.enemy_manager.set_difficulty(game_data.get('difficulty', 'normal'))
+            self.enemy_manager.game_time = self.game_time
+            self.enemy_manager.recalculate_difficulty()
             
             # 恢复敌人状态
             enemies_data = save_data.get('enemies_data', [])

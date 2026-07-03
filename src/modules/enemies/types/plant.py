@@ -11,12 +11,15 @@ class PlantProjectile(pygame.sprite.Sprite):
         super().__init__()
         self.x = x
         self.y = y
+        self.start_x = x
+        self.start_y = y
         self.direction_x = direction_x
         self.direction_y = direction_y
         self.damage = damage
         self.speed = speed
         self.radius = 8
         self.lifetime = 5.0
+        self.max_distance = 300
         
         if bullet_type == 1:
             image_path = 'images/enemy/plant_Bullet1.png'
@@ -31,7 +34,9 @@ class PlantProjectile(pygame.sprite.Sprite):
         self.y += self.direction_y * self.speed * dt
         self.rect.center = (self.x, self.y)
         self.lifetime -= dt
-        if self.lifetime <= 0:
+        
+        distance = math.sqrt((self.x - self.start_x) ** 2 + (self.y - self.start_y) ** 2)
+        if self.lifetime <= 0 or distance >= self.max_distance:
             self.kill()
 
 
