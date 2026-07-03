@@ -45,19 +45,19 @@ class Slime(Enemy):
         # 创建动画
         self.animations = {
             'idle': resource_manager.create_animation(
-                'ranger_idle', idle_spritesheet,
+                'slime_idle', idle_spritesheet,
                 frame_width=44, frame_height=30,
                 frame_count=10, row=0,
                 frame_duration=animation_speed
             ),
             'walk': resource_manager.create_animation(
-                'ranger_walk', walk_spritesheet,
+                'slime_walk', walk_spritesheet,
                 frame_width=44, frame_height=30,
                 frame_count=10, row=0,
                 frame_duration=animation_speed
             ),
             'hurt': resource_manager.create_animation(
-                'ranger_hurt', hurt_spritesheet,
+                'slime_hurt', hurt_spritesheet,
                 frame_width=44, frame_height=30,
                 frame_count=10, row=0,
                 frame_duration=animation_speed

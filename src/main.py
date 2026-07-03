@@ -4,12 +4,11 @@ from modules.game import Game
 
 def main():
     pygame.init()
-    pygame.mixer.init()
     screen_width = 1280
     screen_height = 720
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("像素生存")
-    
+
     clock = pygame.time.Clock()
     game = Game(screen)
     

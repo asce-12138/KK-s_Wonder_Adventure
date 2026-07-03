@@ -49,14 +49,16 @@ class AnimationComponent(Component):
         """
         from ..resource_manager import resource_manager
         
+        hero_type = getattr(self.owner, 'hero_type', 'unknown')
+        
         for anim_name, anim_info in animation_data.items():
             sprite_sheet = resource_manager.load_spritesheet(
-                f"{anim_name}_sprite", 
+                f"{hero_type}_{anim_name}_sprite", 
                 anim_info['sprite_sheet']
             )
             
             self.animations[anim_name] = resource_manager.create_animation(
-                f"{anim_name}_anim",
+                f"{hero_type}_{anim_name}_anim",
                 sprite_sheet,
                 frame_width=anim_info.get('frame_width', 32),
                 frame_height=anim_info.get('frame_height', 32),

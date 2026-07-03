@@ -94,23 +94,23 @@ HERO_CONFIGS = {
         "description": "高速度，低血量的敏捷型英雄",
         "animations": {
             "idle": {
-                "sprite_sheet": "images/player/kk.png",
-                "frame_count": 1,
-                "frame_duration": 0.1,
+                "sprite_sheet": "images/player/Masked_Dude_Idle_32x32.png",
+                "frame_count": 11,
+                "frame_duration": 0.0333,
                 "frame_width": 32,
                 "frame_height": 32
             },
             "run": {
-                "sprite_sheet": "images/player/kk.png",
-                "frame_count": 1,
-                "frame_duration": 0.1,
+                "sprite_sheet": "images/player/Masked_Dude_Run_32x32.png",
+                "frame_count": 12,
+                "frame_duration": 0.0333,
                 "frame_width": 32,
                 "frame_height": 32
             },
             "hurt": {
-                "sprite_sheet": "images/player/kk.png",
-                "frame_count": 1,
-                "frame_duration": 0.1,
+                "sprite_sheet": "images/player/Masked_Dude_Hit_32x32.png",
+                "frame_count": 7,
+                "frame_duration": 0.0333,
                 "frame_width": 32,
                 "frame_height": 32
             }
