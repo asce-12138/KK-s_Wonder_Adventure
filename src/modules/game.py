@@ -150,8 +150,8 @@ class Game:
         self.camera_x = self.player.world_x
         self.camera_y = self.player.world_y
         
-        # 播放背景音乐
-        resource_manager.play_music("background", loops=-1)
+        # 播放地图特定的背景音乐
+        resource_manager.play_map_music(map_id, loops=-1)
         
     def _back_to_main_menu(self):
         """从地图和英雄选择界面返回主菜单"""
