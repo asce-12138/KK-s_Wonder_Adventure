@@ -720,6 +720,14 @@ class Game:
                 
                 # 对于直接碰撞的敌人，进行常规碰撞检测
                 if player_rect.colliderect(enemy.rect):
+                    # skt敌人在idle1形态时只有远程攻击，不造成近战碰撞伤害
+                    if enemy.type == 'skt' and getattr(enemy, 'current_form', 1) == 1:
+                        continue
+                    
+                    # plant敌人只有子弹伤害，不造成本体碰撞伤害
+                    if enemy.type == 'plant':
+                        continue
+                    
                     # 像素级碰撞检测
                     # 玩家 rect 停在屏幕中心(相机跟随玩家)，而 enemy.rect 在世界坐标，
                     # 直接用 apply_mask_collision 会按屏幕坐标算 mask 偏移导致永远不重叠，

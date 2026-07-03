@@ -201,22 +201,22 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="防御力",
                         level=1,
-                        effects={'defense': 0.5},
-                        description="防御力提升50%",
-                        icon_path="images/passives/defense_up_32x32.png"
-                    ),
-                    PassiveUpgradeLevel(
-                        name="防御力",
-                        level=2,
-                        effects={'defense': 1.0},
+                        effects={'defense': 0.2},
                         description="防御力提升20%",
                         icon_path="images/passives/defense_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="防御力",
+                        level=2,
+                        effects={'defense': 0.35},
+                        description="防御力提升35%",
+                        icon_path="images/passives/defense_up_32x32.png"
+                    ),
+                    PassiveUpgradeLevel(
+                        name="防御力",
                         level=3,
-                        effects={'defense': 0.3},
-                        description="防御力提升30%",
+                        effects={'defense': 0.5},
+                        description="防御力提升50%",
                         icon_path="images/passives/defense_up_32x32.png"
                     )
                 ]
