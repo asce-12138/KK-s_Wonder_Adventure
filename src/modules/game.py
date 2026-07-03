@@ -730,7 +730,7 @@ class Game:
                     self.player.rect = saved_rect
                     if collided:
                         # 玩家与敌人碰撞，立即造成伤害
-                        damage_amount = enemy.damage
+                        damage_amount = enemy.damage * 0.5  # 近战伤害减半
                         if self.player.take_damage(damage_amount):
                             # 播放受伤音效
                             resource_manager.play_sound("player_hurt")

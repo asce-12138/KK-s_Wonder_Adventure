@@ -18,31 +18,35 @@ class Skeleton(Enemy):
         
     def load_animations(self):
         idle_spritesheet = resource_manager.load_spritesheet(
-            'skeleton_idle_spritesheet', 'images/enemy/skeleton_idle_32x40.png')
+            'yctf_idle_spritesheet', 'images/enemy/yctf.png')
         
         self.animations = {
             'idle': resource_manager.create_animation(
-                'skeleton_idle', idle_spritesheet,
-                frame_width=32, frame_height=40,
-                frame_count=1, row=0,
-                frame_duration=1.0
+                'yctf_idle', idle_spritesheet,
+                frame_width=45, frame_height=46,
+                frame_count=13, row=0,
+                frame_duration=0.1
             ),
             'walk': resource_manager.create_animation(
-                'skeleton_walk', idle_spritesheet,
-                frame_width=32, frame_height=40,
-                frame_count=1, row=0,
-                frame_duration=1.0
+                'yctf_walk', idle_spritesheet,
+                frame_width=45, frame_height=46,
+                frame_count=13, row=0,
+                frame_duration=0.1
             ),
             'hurt': resource_manager.create_animation(
-                'skeleton_hurt', idle_spritesheet,
-                frame_width=32, frame_height=40,
-                frame_count=1, row=0,
-                frame_duration=1.0
+                'yctf_hurt', idle_spritesheet,
+                frame_width=45, frame_height=46,
+                frame_count=13, row=0,
+                frame_duration=0.1
             )
         }
     
     def update(self, dt, player):
         self.update_status_effects(dt)
+        
+        # 更新动画帧
+        if self.current_animation in self.animations:
+            self.animations[self.current_animation].update(dt)
         
         if self.invincible:
             self.invincible_timer -= dt
@@ -66,9 +70,18 @@ class Skeleton(Enemy):
         self.update_image()
     
     def update_image(self):
-        modified_frame = self.original_image.copy()
+        # 从当前动画取帧并缩放，替代静态的 original_image
+        if self.current_animation in self.animations:
+            current_frame = self.animations[self.current_animation].get_current_frame()
+            original_size = current_frame.get_size()
+            new_size = (int(original_size[0] * self.scale), int(original_size[1] * self.scale))
+            base_frame = pygame.transform.scale(current_frame, new_size)
+        else:
+            base_frame = self.original_image.copy()
         
-        mask = pygame.mask.from_surface(self.original_image)
+        modified_frame = base_frame.copy()
+        
+        mask = pygame.mask.from_surface(base_frame)
         mask_outline = mask.outline()
         
         if 'slow' in self.status_effects:
