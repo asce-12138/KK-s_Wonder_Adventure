@@ -80,10 +80,10 @@ ENEMY_CONFIGS = {
     
     # boss1 - Boss级敌人，每5次生成一次，数值很高
     "boss1": {
-        "health": 1000,
-        "damage": 150,          # 基础伤害（从80提高到150）
+        "health": 100,
+        "damage": 50,          # 基础伤害（从80提高到150）
         "speed": 150,
-        "score_value": 1000,
+        "score_value": 100,
         "animation_speed": 0.0333,
         "scale": 1.5,
     }
