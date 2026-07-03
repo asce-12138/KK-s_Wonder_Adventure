@@ -359,8 +359,8 @@ class Enemy(pygame.sprite.Sprite, ABC):
         health_bar_height = 5 * self.scale
         health_ratio = self.health / self.max_health
         
-        # 调整血条位置，使其位于敌人上方
-        bar_x = screen_x
+        # 调整血条位置，使其位于敌人正上方
+        bar_x = screen_x + (self.rect.width - health_bar_width) / 2
         bar_y = screen_y - 10 * self.scale
         
         pygame.draw.rect(screen, (255, 0, 0),  # 红色背景
