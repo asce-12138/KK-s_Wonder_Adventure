@@ -6,11 +6,15 @@ from ..weapon_stats import WeaponStatType, WeaponStatsDict
 
 class ExplosionEffect(pygame.sprite.Sprite):
     """火球爆炸特效"""
-    def __init__(self, x, y, radius):
+    def __init__(self, x, y, radius, scale=1.0):
         super().__init__()
         self.world_x = x
         self.world_y = y
         self.radius = radius
+        self.scale = scale
+        
+        # 基础大小为 128x128，根据 scale 进行缩放
+        self.base_size = int(128 * scale)
         
         # 使用资源管理器的spritesheet和animation功能
         spritesheet = resource_manager.load_spritesheet('explosion', 'images/effects/explosion_64x64.png')
@@ -28,7 +32,7 @@ class ExplosionEffect(pygame.sprite.Sprite):
         self.animation_speed = animation.frame_duration
         
         self.current_frame = 0
-        self.image = pygame.transform.scale(self.frames[0], (128, 128))
+        self.image = pygame.transform.scale(self.frames[0], (self.base_size, self.base_size))
         self.rect = self.image.get_rect(center=(int(x), int(y)))
         
         # 动画控制
@@ -47,7 +51,7 @@ class ExplosionEffect(pygame.sprite.Sprite):
             
             # 更新当前帧
             self.image = self.frames[self.current_frame]
-            self.image = pygame.transform.scale(self.image, (128, 128))
+            self.image = pygame.transform.scale(self.image, (self.base_size, self.base_size))
             self.rect = self.image.get_rect(center=(int(self.world_x), int(self.world_y)))
     
     def render(self, screen, camera_x, camera_y):
@@ -60,12 +64,16 @@ class ExplosionEffect(pygame.sprite.Sprite):
                                  screen_y - self.image.get_height() // 2))
 
 class FireballProjectile(pygame.sprite.Sprite):
-    def __init__(self, x, y, target, stats):
+    def __init__(self, x, y, target, stats, is_mega=False):
         super().__init__()
         # 加载基础图像
         self.base_image = resource_manager.load_image('weapon_fireball', 'images/weapons/fireball_32x32.png')
         self.image = self.base_image
         self.rect = self.image.get_rect()
+
+        # 是否为巨大火球
+        self.is_mega = is_mega
+        self.visual_scale = stats.get(WeaponStatType.BIG_FIREBALL_SCALE, 5.0) if is_mega else 1.0
         
         # 位置信息（世界坐标）
         self.world_x = float(x)
@@ -77,14 +85,23 @@ class FireballProjectile(pygame.sprite.Sprite):
         self.target = target
         
         # 投射物属性
-        self.damage = stats.get(WeaponStatType.DAMAGE, 30)
+        base_damage = stats.get(WeaponStatType.DAMAGE, 30)
+        base_radius = stats.get(WeaponStatType.EXPLOSION_RADIUS, 50)
+        if is_mega:
+            damage_multiplier = stats.get(WeaponStatType.BIG_FIREBALL_DAMAGE_MULTIPLIER, 3.0)
+            radius_multiplier = stats.get(WeaponStatType.BIG_FIREBALL_RADIUS_MULTIPLIER, 3.0)
+            self.damage = int(base_damage * damage_multiplier)
+            self.explosion_radius = int(base_radius * radius_multiplier)
+        else:
+            self.damage = base_damage
+            self.explosion_radius = base_radius
+
         self.speed = float(stats.get(WeaponStatType.PROJECTILE_SPEED, 300))  # 确保速度是浮点数
-        
+
         # 初始化方向
         self.direction_x = 0.0
         self.direction_y = 0.0
-        
-        self.explosion_radius = stats.get(WeaponStatType.EXPLOSION_RADIUS, 50)
+
         self.burn_damage = stats.get(WeaponStatType.BURN_DAMAGE, 5)
         self.burn_duration = stats.get(WeaponStatType.BURN_DURATION, 3.0)
         
@@ -163,8 +180,10 @@ class FireballProjectile(pygame.sprite.Sprite):
             explosion_y = self.world_y
         
         # 总是创建爆炸特效，无论effects_group是否设置
+        # 巨大火球的爆炸特效也同步放大
+        explosion_scale = self.visual_scale if self.is_mega else 1.0
         if self.effects_group is not None:
-            explosion = ExplosionEffect(explosion_x, explosion_y, self.explosion_radius)
+            explosion = ExplosionEffect(explosion_x, explosion_y, self.explosion_radius, scale=explosion_scale)
             self.effects_group.add(explosion)
         
         # 如果有敌人列表，对范围内敌人造成伤害（优化性能）
@@ -212,11 +231,12 @@ class FireballProjectile(pygame.sprite.Sprite):
         screen_x = self.world_x - camera_x + screen.get_width() // 2
         screen_y = self.world_y - camera_y + screen.get_height() // 2
         
-        # 缩放图像
-        scaled_size = (int(self.image.get_width() * self.scale),
-                      int(self.image.get_height() * self.scale))
+        # 缩放图像（巨大火球额外放大5倍）
+        total_scale = self.scale * self.visual_scale
+        scaled_size = (int(self.image.get_width() * total_scale),
+                      int(self.image.get_height() * total_scale))
         scaled_image = pygame.transform.scale(self.image, scaled_size)
-        
+
         # 调整绘制位置以保持中心点不变
         draw_x = screen_x - scaled_image.get_width() / 2
         draw_y = screen_y - scaled_image.get_height() / 2
@@ -240,7 +260,7 @@ class FireballProjectile(pygame.sprite.Sprite):
 class Fireball(Weapon):
     def __init__(self, player):
         super().__init__(player, 'fireball')
-        
+
         # 加载音效（使用try-except块处理可能不存在的音效）
         try:
             resource_manager.load_sound('fireball_cast', 'music/sfx/weapons/fireball.wav')
@@ -248,9 +268,12 @@ class Fireball(Weapon):
         except Exception as e:
             # 在测试环境中可能没有音效资源，忽略错误
             print(f"Warning: Could not load fireball sounds: {e}")
-        
+
         # 特效组 - 用于存放爆炸效果
         self.effects = pygame.sprite.Group()
+
+        # 攻击计数，用于触发巨大火球
+        self.attack_counter = 0
         
     def find_nearest_enemy(self, enemies):
         """寻找最近的敌人"""
@@ -287,35 +310,47 @@ class Fireball(Weapon):
         target = self.find_nearest_enemy(enemies)
         if not target:
             return
-            
-        fireball_count = int(self.current_stats.get(WeaponStatType.PROJECTILES_PER_CAST, 1))
-        
-        if fireball_count > 1:
-            # 计算扇形分布
-            spread_angle = self.current_stats.get(WeaponStatType.SPREAD_ANGLE, 20)
-            angle_step = spread_angle / (fireball_count - 1)
-            base_angle = math.degrees(math.atan2(
-                target.rect.y - self.player.world_y,
-                target.rect.x - self.player.world_x
-            ))
-            start_angle = base_angle - spread_angle / 2
-            
-            for i in range(fireball_count):
-                self._cast_single_fireball(target)
+
+        # 增加攻击计数
+        self.attack_counter += 1
+
+        # 检查是否触发巨大火球（3级及以上才配置该属性）
+        big_interval = self.current_stats.get(WeaponStatType.BIG_FIREBALL_INTERVAL, 0)
+        cast_mega = big_interval > 0 and self.attack_counter % big_interval == 0
+
+        if cast_mega:
+            # 施放一个巨大火球
+            self._cast_single_fireball(target, is_mega=True)
         else:
-            # 单个火球直接施放
-            self._cast_single_fireball(target)
-            
+            # 普通火球逻辑
+            fireball_count = int(self.current_stats.get(WeaponStatType.PROJECTILES_PER_CAST, 1))
+            if fireball_count > 1:
+                # 计算扇形分布
+                spread_angle = self.current_stats.get(WeaponStatType.SPREAD_ANGLE, 20)
+                angle_step = spread_angle / (fireball_count - 1)
+                base_angle = math.degrees(math.atan2(
+                    target.rect.y - self.player.world_y,
+                    target.rect.x - self.player.world_x
+                ))
+                start_angle = base_angle - spread_angle / 2
+
+                for i in range(fireball_count):
+                    self._cast_single_fireball(target)
+            else:
+                # 单个火球直接施放
+                self._cast_single_fireball(target)
+
         # 播放施法音效
         resource_manager.play_sound('fireball_cast')
-        
-    def _cast_single_fireball(self, target):
+
+    def _cast_single_fireball(self, target, is_mega=False):
         """施放单个火球"""
         fireball = FireballProjectile(
             self.player.world_x,
             self.player.world_y,
             target,
-            self.current_stats
+            self.current_stats,
+            is_mega=is_mega
         )
         # 设置特效组，用于后续添加爆炸效果
         fireball.effects_group = self.effects

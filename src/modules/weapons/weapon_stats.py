@@ -30,6 +30,14 @@ class WeaponStatType(Enum):
     SLOW_PERCENT = 'slow_percent'             # 减速百分比(0-100)
     EXPLOSION_RADIUS = 'explosion_radius'     # 爆炸范围半径(像素)
 
+    # 特殊机制 Special Mechanics
+    BIG_FIREBALL_INTERVAL = 'big_fireball_interval'           # 巨大火球触发间隔（每N次普通攻击）
+    BIG_FIREBALL_DAMAGE_MULTIPLIER = 'big_fireball_damage_multiplier'  # 巨大火球伤害倍率
+    BIG_FIREBALL_RADIUS_MULTIPLIER = 'big_fireball_radius_multiplier'  # 巨大火球范围倍率
+    BIG_FIREBALL_SCALE = 'big_fireball_scale'                 # 巨大火球视觉缩放
+    BONUS_PROJECTILES_INTERVAL = 'bonus_projectiles_interval' # 额外投射物触发间隔（每N次普通攻击）
+    BONUS_PROJECTILES_COUNT = 'bonus_projectiles_count'       # 额外投射物数量
+
 # 武器属性的默认值
 DEFAULT_WEAPON_STATS: Dict[WeaponStatType, Any] = {
     WeaponStatType.DAMAGE: 10,
@@ -49,6 +57,12 @@ DEFAULT_WEAPON_STATS: Dict[WeaponStatType, Any] = {
     WeaponStatType.SLOW_DURATION: 0,
     WeaponStatType.FREEZE_DURATION: 0,
     WeaponStatType.SLOW_PERCENT: 0,
+    WeaponStatType.BIG_FIREBALL_INTERVAL: 0,
+    WeaponStatType.BIG_FIREBALL_DAMAGE_MULTIPLIER: 1.0,
+    WeaponStatType.BIG_FIREBALL_RADIUS_MULTIPLIER: 1.0,
+    WeaponStatType.BIG_FIREBALL_SCALE: 1.0,
+    WeaponStatType.BONUS_PROJECTILES_INTERVAL: 0,
+    WeaponStatType.BONUS_PROJECTILES_COUNT: 0,
 }
 
 WeaponStatsDict = Dict[WeaponStatType, Union[int, float, bool]] 

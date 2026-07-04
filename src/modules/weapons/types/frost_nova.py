@@ -61,12 +61,15 @@ class FrostExplosionEffect(pygame.sprite.Sprite):
                                  screen_y - self.image.get_height() // 2))
 
 class FrostNovaProjectile(pygame.sprite.Sprite):
-    def __init__(self, x, y, target, stats):
+    def __init__(self, x, y, target, stats, direction=None):
         super().__init__()
         # 加载基础图像
         self.base_image = resource_manager.load_image('weapon_frost_nova', 'images/weapons/nova_32x32.png')
         self.image = self.base_image
         self.rect = self.image.get_rect()
+
+        # 可选的固定方向（用于额外冰锥从不同方向发射）
+        self.fixed_direction = direction
         
         # 位置信息（世界坐标）
         self.world_x = float(x)
@@ -105,17 +108,28 @@ class FrostNovaProjectile(pygame.sprite.Sprite):
         
     def _update_direction(self):
         """更新朝向目标的方向"""
+        # 如果指定了固定方向，优先使用固定方向（额外冰锥从不同方向飞）
+        if self.fixed_direction is not None:
+            self.direction_x = self.fixed_direction[0]
+            self.direction_y = self.fixed_direction[1]
+            angle = math.degrees(math.atan2(-self.direction_y, self.direction_x))
+            self.image = pygame.transform.rotate(self.base_image, angle)
+            new_rect = self.image.get_rect()
+            new_rect.center = self.rect.center
+            self.rect = new_rect
+            return
+
         if self.target and self.target.alive():
             # 使用世界坐标计算方向
             dx = self.target.rect.centerx - self.world_x
             dy = self.target.rect.centery - self.world_y
             distance = math.sqrt(dx * dx + dy * dy)
-            
+
             if distance > 0:
                 # 更新方向向量（确保是标准化的单位向量）
                 self.direction_x = dx / distance
                 self.direction_y = dy / distance
-                
+
                 # 更新图像旋转
                 angle = math.degrees(math.atan2(-dy, dx))  # 注意：pygame的y轴是向下的，所以需要取负
                 self.image = pygame.transform.rotate(self.base_image, angle)
@@ -283,7 +297,7 @@ class FrostNovaProjectile(pygame.sprite.Sprite):
 class FrostNova(Weapon):
     def __init__(self, player):
         super().__init__(player, 'frost_nova')
-        
+
         # 加载音效
         try:
             resource_manager.load_sound('frost_nova_cast', 'music/sfx/weapons/frost_nova.wav')
@@ -291,9 +305,12 @@ class FrostNova(Weapon):
         except Exception as e:
             # 在测试环境中可能没有音效资源，忽略错误
             print(f"Warning: Could not load frost nova explosion sound: {e}")
-        
+
         # 特效组 - 用于存放爆炸效果
         self.effects = pygame.sprite.Group()
+
+        # 攻击计数，用于触发额外冰锥
+        self.attack_counter = 0
         
     def find_nearest_enemy(self, enemies):
         """寻找最近的敌人"""
@@ -330,9 +347,12 @@ class FrostNova(Weapon):
         target = self.find_nearest_enemy(enemies)
         if not target:
             return
-            
+
+        # 增加攻击计数
+        self.attack_counter += 1
+
         nova_count = int(self.current_stats.get(WeaponStatType.PROJECTILES_PER_CAST, 1))
-        
+
         if nova_count > 1:
             # 计算扇形分布
             spread_angle = self.current_stats.get(WeaponStatType.SPREAD_ANGLE, 20)
@@ -342,28 +362,44 @@ class FrostNova(Weapon):
                 target.world_x - self.player.world_x
             ))
             start_angle = base_angle - spread_angle / 2
-            
+
             for i in range(nova_count):
                 self._cast_single_nova(target)
         else:
             # 单个新星直接施放
             self._cast_single_nova(target)
-            
+
+        # 检查是否触发额外冰锥（3级及以上才配置该属性）
+        bonus_interval = self.current_stats.get(WeaponStatType.BONUS_PROJECTILES_INTERVAL, 0)
+        if bonus_interval > 0 and self.attack_counter % bonus_interval == 0:
+            bonus_count = int(self.current_stats.get(WeaponStatType.BONUS_PROJECTILES_COUNT, 0))
+            self._cast_bonus_novas(bonus_count)
+
         # 播放施法音效
         resource_manager.play_sound('frost_nova_cast')
-        
-    def _cast_single_nova(self, target):
+
+    def _cast_single_nova(self, target, direction=None):
         """施放单个冰霜新星"""
         nova = FrostNovaProjectile(
             self.player.world_x,
             self.player.world_y,
             target,
-            self.current_stats
+            self.current_stats,
+            direction=direction
         )
         # 设置特效组，用于后续添加爆炸效果
         nova.effects_group = self.effects
         self.projectiles.add(nova)
         return nova  # 返回创建的投射物
+
+    def _cast_bonus_novas(self, count):
+        """从不同方向施放额外冰锥"""
+        for i in range(count):
+            # 均匀分布在360度方向上
+            angle = math.radians(i * 360 / count)
+            direction_x = math.cos(angle)
+            direction_y = math.sin(angle)
+            self._cast_single_nova(None, direction=(direction_x, direction_y))
         
     def render(self, screen, camera_x, camera_y):
         # 渲染所有冰霜新星

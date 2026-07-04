@@ -181,10 +181,11 @@ class Fly(Enemy):
             player.take_damage(projectile.damage)
             
             if hasattr(player, 'movement'):
-                if not hasattr(player.movement, 'original_speed'):
-                    player.movement.original_speed = player.movement.speed
-                player.movement.speed = player.movement.original_speed * (1 - self.slow_percent)
-                
+                # 使用倍率叠加，避免覆盖加速升级
+                # 实际速度 = base_speed × speed_multiplier
+                new_multiplier = 1.0 - self.slow_percent
+                player.movement.set_speed_multiplier(new_multiplier)
+
                 if not hasattr(player, 'slow_timer'):
                     player.slow_timer = 0
                 player.slow_timer = self.slow_duration

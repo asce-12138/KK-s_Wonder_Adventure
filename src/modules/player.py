@@ -221,8 +221,8 @@ class Player(pygame.sprite.Sprite):
         if hasattr(self, 'slow_timer') and self.slow_timer > 0:
             self.slow_timer -= dt
             if self.slow_timer <= 0:
-                if hasattr(self.movement, 'original_speed'):
-                    self.movement.speed = self.movement.original_speed
+                # 恢复速度倍率到 1.0，自动重新计算实际速度（保留加速升级）
+                self.movement.set_speed_multiplier(1.0)
                 delattr(self, 'slow_timer')
         
     def update_mask(self):

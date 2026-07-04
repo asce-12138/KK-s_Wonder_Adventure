@@ -22,7 +22,10 @@ class MovementComponent(Component):
         # 基础属性
         self.base_speed = speed
         self.speed = speed
-        
+
+        # 速度倍率（用于叠加减速/加速debuff，默认1.0）
+        self.speed_multiplier = 1.0
+
         # 移动状态
         self.velocity = pygame.math.Vector2()
         self.direction = pygame.math.Vector2()
@@ -162,9 +165,21 @@ class MovementComponent(Component):
         
     def set_speed(self, speed):
         """
-        设置移动速度
-        
+        设置移动速度（基础速度，会与 speed_multiplier 相乘得到实际速度）
+
         Args:
-            speed: 新的移动速度
+            speed: 新的基础移动速度
         """
-        self.speed = speed 
+        self.base_speed = speed
+        # 实际速度 = 基础速度 × 倍率，避免减速/加速debuff结束时丢失基础速度修正
+        self.speed = speed * self.speed_multiplier
+
+    def set_speed_multiplier(self, multiplier):
+        """
+        设置速度倍率（如减速/加速debuff），基于当前 base_speed 重新计算实际速度。
+
+        Args:
+            multiplier: 新的速度倍率
+        """
+        self.speed_multiplier = multiplier
+        self.speed = self.base_speed * self.speed_multiplier

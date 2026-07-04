@@ -100,14 +100,14 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="迅捷",
                         level=2,
-                        effects={'speed': 0.4},
+                        effects={'speed': 0.2},
                         description="移动速度提升40%",
                         icon_path="images/passives/speed_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="迅捷",
                         level=3,
-                        effects={'speed': 0.6},
+                        effects={'speed': 0.2},
                         description="移动速度提升60%",
                         icon_path="images/passives/speed_up_32x32.png"
                     )
@@ -181,15 +181,15 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="攻击力",
                         level=2,
-                        effects={'attack_power': 1.0},
-                        description="攻击力提升100%",
+                        effects={'attack_power': 0.5},
+                        description="攻击力提升50%",
                         icon_path="images/passives/damage_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="攻击力",
                         level=3,
-                        effects={'attack_power': 2.0},
-                        description="攻击力提升200%",
+                        effects={'attack_power': 1.0},
+                        description="攻击力提升100%",
                         icon_path="images/passives/damage_up_32x32.png"
                     )
                 ]
@@ -208,15 +208,15 @@ class UpgradeManager:
                     PassiveUpgradeLevel(
                         name="防御力",
                         level=2,
-                        effects={'defense': 0.35},
-                        description="防御力提升35%",
+                        effects={'defense': 0.2},
+                        description="防御力提升20%",
                         icon_path="images/passives/defense_up_32x32.png"
                     ),
                     PassiveUpgradeLevel(
                         name="防御力",
                         level=3,
-                        effects={'defense': 0.5},
-                        description="防御力提升50%",
+                        effects={'defense': 0.2},
+                        description="防御力提升20%",
                         icon_path="images/passives/defense_up_32x32.png"
                     )
                 ]

@@ -44,28 +44,35 @@ class PassiveManager(Component):
                 self.owner.coins += effects.get('coins', 0)
             return True
         
-        # 已有该被动技能 - 升级
+        # 已有该被动技能 - 升级（叠加新等级效果，保留之前等级已应用的加成）
         if passive_type in self.passive_levels:
+            old_effects = self.passives.get(passive_type, {})
+            # 将新等级的效果叠加到旧效果上，而不是覆盖
+            # 这样多次升级 pickup_range 等加成型被动时，加成会累积
+            merged_effects = old_effects.copy()
+            for stat, value in effects.items():
+                merged_effects[stat] = merged_effects.get(stat, 0) + value
+
             self.passive_levels[passive_type] = level
-            self.passives[passive_type] = effects
-            
+            self.passives[passive_type] = merged_effects
+
             # 通知属性变化
             if self.on_stats_changed:
                 self.on_stats_changed()
-                
+
             return True
-            
+
         # 没有该被动技能且被动技能栏未满 - 添加新被动技能
         elif len(self.passives) < self.max_passives:
             self.passive_levels[passive_type] = level
             self.passives[passive_type] = effects
-            
+
             # 通知属性变化
             if self.on_stats_changed:
                 self.on_stats_changed()
-                
+
             return True
-                
+
         return False
     
     def get_passive_level(self, passive_type):
