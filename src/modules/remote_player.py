@@ -67,9 +67,8 @@ class RemotePlayer:
             
             frames = []
             for i in range(frame_count):
-                frame_surface = pygame.Surface((frame_width, frame_height), pygame.SRCALPHA)
                 x = i * frame_width
-                frame_surface.blit(sprite_sheet, (0, 0), (x, 0, frame_width, frame_height))
+                frame_surface = sprite_sheet.get_sprite(x, 0, frame_width, frame_height)
                 
                 if anim_scale != 1.0:
                     new_w = int(frame_width * anim_scale)
