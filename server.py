@@ -150,10 +150,18 @@ class GameServer:
         with self.lock:
             for client in self.clients:
                 if client != exclude_socket:
-                    try:
-                        client.send(message.encode('utf-8'))
-                    except Exception:
-                        pass
+                    encoded = message.encode('utf-8')
+                    for _ in range(20):
+                        try:
+                            sent = client.send(encoded)
+                            encoded = encoded[sent:]
+                            if not encoded:
+                                break
+                        except BlockingIOError:
+                            import time
+                            time.sleep(0.01)
+                    else:
+                        print(f"[服务端] 转发消息失败")
     
     def _remove_client(self, client_socket, player_id):
         """移除断开连接的客户端"""

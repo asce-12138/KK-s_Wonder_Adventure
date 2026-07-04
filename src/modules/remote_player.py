@@ -103,6 +103,9 @@ class RemotePlayer:
             self.hero_type = new_hero_type
             self.hero_config = get_hero_config(new_hero_type)
             self._init_animations()
+            self.current_animation = 'idle'
+            self.current_frame_index = 0
+            self.animation_time = 0
     
     def update(self, dt):
         """
@@ -128,6 +131,10 @@ class RemotePlayer:
         # 更新动画帧
         anim_frames = self.animations.get(self.current_animation)
         if anim_frames and len(anim_frames) > 0:
+            # 防止帧索引越界
+            if self.current_frame_index >= len(anim_frames):
+                self.current_frame_index = 0
+            
             self.animation_time += dt
             current_frame = anim_frames[self.current_frame_index]
             
@@ -142,7 +149,8 @@ class RemotePlayer:
         """更新当前显示的图像"""
         anim_frames = self.animations.get(self.current_animation)
         if anim_frames and len(anim_frames) > 0:
-            frame = anim_frames[self.current_frame_index % len(anim_frames)]
+            frame_index = self.current_frame_index % len(anim_frames)
+            frame = anim_frames[frame_index]
             self.image = frame['surface'].copy()
             
             # 根据朝向翻转图像

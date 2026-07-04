@@ -101,7 +101,7 @@ class NetworkClient:
                     break
                 
                 if not readable:
-                    if time.time() - self.last_heartbeat > 10.0:
+                    if time.time() - self.last_heartbeat > 30.0:
                         print("[客户端] 心跳超时，连接可能已断开")
                         break
                     continue
@@ -112,7 +112,12 @@ class NetworkClient:
                     break
                 
                 self.last_heartbeat = time.time()
-                buffer += data.decode('utf-8')
+                try:
+                    buffer += data.decode('utf-8')
+                except UnicodeDecodeError:
+                    print("[客户端] 收到非法数据，清空缓冲区")
+                    buffer = ""
+                    continue
                 
                 while '\n' in buffer:
                     line, buffer = buffer.split('\n', 1)
@@ -128,7 +133,7 @@ class NetworkClient:
                 break
             except Exception as e:
                 if self.running:
-                    pass
+                    print(f"[客户端] 接收数据出错: {e}")
                 break
         
         self._handle_disconnect()
@@ -145,9 +150,20 @@ class NetworkClient:
                     message = self.send_queue.get(timeout=0.5)
                     if message:
                         data = json.dumps(message) + '\n'
+                        encoded = data.encode('utf-8')
                         with self.lock:
                             if self.client_socket and self.connected:
-                                self.client_socket.send(data.encode('utf-8'))
+                                remaining = encoded
+                                for _ in range(20):
+                                    try:
+                                        sent = self.client_socket.send(remaining)
+                                        remaining = remaining[sent:]
+                                        if not remaining:
+                                            break
+                                    except BlockingIOError:
+                                        time.sleep(0.01)
+                                else:
+                                    print("[客户端] 发送缓冲区已满，连接不稳定")
                 except queue.Empty:
                     if time.time() - self.last_heartbeat > self.heartbeat_interval:
                         self.send_queue.put({"type": "heartbeat", "timestamp": time.time()})
