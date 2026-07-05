@@ -2,12 +2,14 @@ import pygame
 from ..resource_manager import resource_manager
 
 class Item(pygame.sprite.Sprite):
-    def __init__(self, x, y, item_type):
+    def __init__(self, x, y, item_type, item_id=None, on_collect_callback=None):
         super().__init__()
         self.world_x = x
         self.world_y = y
         self.item_type = item_type
+        self.item_id = item_id
         self.collected = False
+        self.on_collect_callback = on_collect_callback
         
         # 根据物品类型设置图像
         if item_type == 'exp':
@@ -86,6 +88,10 @@ class Item(pygame.sprite.Sprite):
         elif self.item_type == 'chest':
             # TODO: 宝箱掉落物品,随机掉落武器、被动升级卡片、组合超武升级
             pass
+        
+        # 通知外部拾取事件，用于网络同步
+        if self.on_collect_callback:
+            self.on_collect_callback(self.item_id, self.item_type)
 
     def render(self, screen, camera_x, camera_y, screen_center_x, screen_center_y):
         if self.collected:

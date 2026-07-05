@@ -1,4 +1,5 @@
 import pygame
+import math
 from .player import Player
 from .enemies.enemy_manager import EnemyManager
 from .items.item_manager import ItemManager
@@ -15,6 +16,11 @@ from .menus.map_hero_select_menu import MapHeroSelectMenu
 from .network_client import get_network_client
 from .remote_player import RemotePlayer
 from .utils import FontManager
+from .weapons.types.knife import ThrownKnife
+from .weapons.types.fireball import FireballProjectile
+from .weapons.types.frost_nova import FrostNovaProjectile
+from .weapons.weapon_stats import WeaponStatType, DEFAULT_WEAPON_STATS
+from .enemies.visual_enemy_projectile import VisualEnemyProjectile
 
 class Game:
     def __init__(self, screen, network_mode=False, is_host=False, local_player_id=1, on_return_to_lobby=None):
@@ -32,6 +38,14 @@ class Game:
         self.disconnect_message = None
         self.network_sync_timer = 0
         self.network_sync_interval = 0.05
+        
+        # 怪物同步相关
+        self.enemy_sync_timer = 0
+        self.enemy_sync_interval = 0.1  # 10Hz 怪物状态同步
+        self.pending_dead_enemies = []  # 本帧死亡的敌人，用于主机广播
+        
+        # 敌人投射物视觉副本（客户端显示主机敌人子弹）
+        self.visual_enemy_projectiles = pygame.sprite.Group()
         
         self.remote_player = None
         self.remote_player_data = None
@@ -69,6 +83,7 @@ class Game:
         
         self.pause_menu = PauseMenu(screen)
         self.game_over_menu = GameOverMenu(screen)
+        self.victory_menu = GameOverMenu(screen, title="你过关")
         self.upgrade_menu = UpgradeMenu(screen)
         self.save_menu = SaveMenu(screen, True)
         self.load_menu = SaveMenu(screen, False)
@@ -82,6 +97,8 @@ class Game:
         self.game_time = 0
         self.kill_num = 0
         self.level = 1
+        self.level_complete = False
+        self.victory_coin_threshold = 300
         
         self.current_map = None
         
@@ -117,6 +134,246 @@ class Game:
         if self.on_return_to_lobby:
             msg = self.disconnect_message if self.disconnect_message else None
             self.on_return_to_lobby(msg)
+    
+    def _on_item_collected(self, item_id, item_type):
+        """掉落物被拾取时的回调"""
+        if not self.network_mode or not item_id:
+            return
+        net_client = get_network_client()
+        net_client.send_item_pickup(item_id)
+    
+    def _process_network_enemy_sync(self):
+        """处理怪物全量同步数据（加入方）"""
+        if self.is_host:
+            return
+        net_client = get_network_client()
+        sync_data = net_client.get_enemy_sync_data()
+        if sync_data and self.enemy_manager:
+            enemy_states = sync_data.get("enemies", [])
+            self.enemy_manager.apply_enemy_sync(enemy_states)
+    
+    def _process_network_enemy_events(self):
+        """处理怪物事件（主机处理加入方伤害，加入方处理生成/死亡）"""
+        if not self.network_mode:
+            return
+        net_client = get_network_client()
+        events = net_client.get_enemy_events()
+        for event in events:
+            msg_type = event.get("type")
+            if msg_type == "enemy_damage":
+                # 只有主机处理伤害事件
+                if self.is_host and self.enemy_manager:
+                    enemy_id = event.get("enemy_id")
+                    damage = event.get("damage", 0)
+                    self.enemy_manager.apply_damage_event(enemy_id, damage)
+            elif msg_type == "enemy_death":
+                # 加入方处理死亡事件
+                if not self.is_host and self.enemy_manager:
+                    enemy_id = event.get("enemy_id")
+                    self.enemy_manager.remove_enemy_by_id(enemy_id)
+            elif msg_type == "enemy_spawn":
+                # 加入方处理生成事件
+                if not self.is_host and self.enemy_manager:
+                    state = event.copy()
+                    state.pop("type", None)
+                    state.pop("timestamp", None)
+                    self.enemy_manager.spawn_enemy_from_network(state)
+    
+    def _process_network_item_events(self):
+        """处理掉落物事件"""
+        if not self.network_mode:
+            return
+        net_client = get_network_client()
+        events = net_client.get_item_events()
+        for event in events:
+            msg_type = event.get("type")
+            if msg_type == "item_spawn":
+                item_id = event.get("item_id")
+                item_type = event.get("item_type")
+                x = event.get("x")
+                y = event.get("y")
+                if item_id and item_type and x is not None and y is not None and self.item_manager:
+                    self.item_manager.spawn_network_item(item_id, item_type, x, y)
+            elif msg_type == "item_remove":
+                item_id = event.get("item_id")
+                if item_id and self.item_manager:
+                    self.item_manager.remove_item_by_id(item_id)
+            elif msg_type == "item_pickup":
+                # 主机收到拾取事件，广播移除
+                if self.is_host:
+                    item_id = event.get("item_id")
+                    if item_id and self.item_manager:
+                        self.item_manager.remove_item_by_id(item_id)
+                        net_client.send_item_remove(item_id)
+    
+    def _broadcast_enemy_death(self, enemy):
+        """处理怪物死亡：单机直接生成掉落物；网络主机广播死亡事件和掉落物"""
+        x = enemy.rect.x
+        y = enemy.rect.y
+        enemy_type = enemy.type
+        
+        # 单机模式直接生成掉落物
+        if not self.network_mode:
+            if self.item_manager:
+                self.item_manager.spawn_item(x, y, enemy_type, self.player)
+            return
+        
+        # 加入方不处理
+        if not self.is_host:
+            return
+        
+        net_client = get_network_client()
+        enemy_id = enemy.enemy_id
+        
+        # 广播死亡事件
+        net_client.send_enemy_death(enemy_id, x, y, enemy_type)
+        
+        # 生成掉落物并广播
+        if self.item_manager:
+            spawned = self.item_manager.spawn_item(x, y, enemy_type, self.player)
+            for item_id, item_type, ix, iy in spawned:
+                net_client.send_item_spawn(item_id, item_type, ix, iy)
+    
+    def _send_enemy_damage(self, enemy, damage):
+        """加入方上报怪物伤害"""
+        if not self.network_mode or self.is_host:
+            return
+        if enemy.enemy_id is None:
+            return
+        net_client = get_network_client()
+        net_client.send_enemy_damage(enemy.enemy_id, damage)
+    
+    def _on_projectile_created(self, weapon_type, projectile):
+        """本地玩家创建投射物时的回调，发送网络特效事件"""
+        if not self.network_mode:
+            return
+        self._send_weapon_attack_event(weapon_type, projectile)
+    
+    def _send_weapon_attack_event(self, weapon_type, projectile):
+        """发送武器攻击特效事件"""
+        if not self.network_mode:
+            return
+        net_client = get_network_client()
+        if not net_client.connected:
+            return
+        
+        direction_x = getattr(projectile, 'direction_x', 0.0)
+        direction_y = getattr(projectile, 'direction_y', 0.0)
+        level = self.player.weapon_manager.get_weapon_level(weapon_type) if self.player and self.player.weapon_manager else 1
+        is_mega = getattr(projectile, 'is_mega', False)
+        spawn_direction = getattr(projectile, 'spawn_direction', None)
+        
+        # 对于 FrostNova 的额外冰锥，使用原始方向
+        if spawn_direction is not None:
+            direction_x, direction_y = spawn_direction[0], spawn_direction[1]
+        
+        net_client.send_weapon_attack(
+            weapon_type,
+            self.player.world_x,
+            self.player.world_y,
+            (direction_x, direction_y),
+            level=level,
+            is_mega=is_mega
+        )
+    
+    def _process_weapon_attack_events(self):
+        """处理接收到的武器特效事件，创建视觉投射物"""
+        if not self.network_mode or not self.remote_player:
+            return
+        net_client = get_network_client()
+        events = net_client.get_weapon_attack_events()
+        for event in events:
+            self._create_visual_projectile(event)
+    
+    def _create_visual_projectile(self, event):
+        """根据网络事件创建视觉投射物"""
+        if not self.remote_player:
+            return
+        
+        weapon_type = event.get("weapon_type")
+        x = event.get("x", self.remote_player.world_x)
+        y = event.get("y", self.remote_player.world_y)
+        direction_x = event.get("direction_x", 1.0)
+        direction_y = event.get("direction_y", 0.0)
+        level = event.get("level", 1)
+        
+        # 优先使用远程玩家当前位置，避免网络延迟导致位置偏差过大
+        x = self.remote_player.world_x
+        y = self.remote_player.world_y
+        
+        # 构造武器当前属性（用于特效外观）
+        stats = DEFAULT_WEAPON_STATS.copy()
+        # 根据等级简单放大部分属性以匹配视觉效果
+        stats[WeaponStatType.DAMAGE] = stats.get(WeaponStatType.DAMAGE, 20) * (1 + (level - 1) * 0.3)
+        stats[WeaponStatType.PROJECTILE_SPEED] = stats.get(WeaponStatType.PROJECTILE_SPEED, 300)
+        stats[WeaponStatType.LIFETIME] = stats.get(WeaponStatType.LIFETIME, 2.0)
+        
+        projectile = None
+        try:
+            if weapon_type == 'knife':
+                projectile = ThrownKnife(x, y, direction_x, direction_y, stats)
+            elif weapon_type == 'fireball':
+                # 火球使用固定方向，避免追踪近处目标导致旋转/震荡
+                is_mega = event.get("is_mega", False)
+                if is_mega:
+                    stats[WeaponStatType.BIG_FIREBALL_SCALE] = 5.0
+                    stats[WeaponStatType.BIG_FIREBALL_DAMAGE_MULTIPLIER] = 3.0
+                    stats[WeaponStatType.BIG_FIREBALL_RADIUS_MULTIPLIER] = 3.0
+                projectile = FireballProjectile(x, y, None, stats, is_mega=is_mega, fixed_direction=(direction_x, direction_y))
+            elif weapon_type == 'frost_nova':
+                class DummyTarget:
+                    def __init__(self, x, y):
+                        self.rect = pygame.Rect(x, y, 1, 1)
+                    def alive(self):
+                        return True
+                target = DummyTarget(x + direction_x * 100, y + direction_y * 100)
+                projectile = FrostNovaProjectile(x, y, target, stats, direction=(direction_x, direction_y))
+        except Exception as e:
+            print(f"[game] 创建视觉投射物失败: {e}")
+            return
+        
+        if projectile:
+            projectile.visual_only = True
+            # 设置特效组，使爆炸特效能在远程玩家处渲染
+            projectile.effects_group = self.remote_player.visual_effects
+            self.remote_player.add_visual_projectile(projectile)
+    
+    def _broadcast_enemy_projectiles(self):
+        """主机广播新创建的敌人投射物事件"""
+        if not self.network_mode or not self.is_host or not self.enemy_manager:
+            return
+        events = self.enemy_manager.collect_new_projectile_events()
+        if not events:
+            return
+        net_client = get_network_client()
+        for event in events:
+            net_client.send_enemy_projectile(event)
+    
+    def _process_enemy_projectile_events(self):
+        """客户端处理敌人投射物事件，创建视觉副本"""
+        if not self.network_mode or self.is_host:
+            return
+        net_client = get_network_client()
+        events = net_client.get_enemy_projectile_events()
+        for event in events:
+            self._create_visual_enemy_projectile(event)
+    
+    def _create_visual_enemy_projectile(self, event):
+        """根据网络事件创建敌人投射物的视觉副本"""
+        try:
+            projectile = VisualEnemyProjectile(
+                x=event.get("x", 0),
+                y=event.get("y", 0),
+                direction_x=event.get("direction_x", 0.0),
+                direction_y=event.get("direction_y", 0.0),
+                enemy_type=event.get("enemy_type", "unknown"),
+                speed=event.get("speed", 200),
+                lifetime=event.get("lifetime", 5.0),
+                bullet_type=event.get("bullet_type", 1)
+            )
+            self.visual_enemy_projectiles.add(projectile)
+        except Exception as e:
+            print(f"[game] 创建敌人视觉投射物失败: {e}")
         
     def _set_map_boundaries(self):
         if not self.current_map:
@@ -161,13 +418,25 @@ class Game:
         
         self.enemy_manager = EnemyManager()
         self.enemy_manager.set_difficulty("normal")
+        
         self.item_manager = ItemManager()
+        self.item_manager.on_collect_callback = self._on_item_collected
+        
+        # 网络模式下只有主机是权威端
+        if self.network_mode:
+            self.enemy_manager.authoritative = self.is_host
+            self.item_manager.authoritative = self.is_host
+        
+        # 设置武器投射物创建回调，用于网络特效同步
+        if self.player and self.player.weapon_manager:
+            self.player.weapon_manager.on_projectile_created = self._on_projectile_created
         
         self._set_map_boundaries()
         
         self.game_time = 0
         self.kill_num = 0
         self.level = 1
+        self.level_complete = False
         
         self.camera_x = self.player.world_x
         self.camera_y = self.player.world_y
@@ -394,6 +663,24 @@ class Game:
                 self.save_menu.hide()
             return
             
+        if self.level_complete:
+            action = self.victory_menu.handle_event(event)
+            if action == "restart":
+                self.start_new_game()
+            elif action == "main_menu":
+                if self.network_mode:
+                    self._return_to_lobby()
+                else:
+                    self.in_main_menu = True
+                    self.level_complete = False
+                    self._play_menu_music()
+            elif action == "exit":
+                if self.network_mode:
+                    self._return_to_lobby()
+                else:
+                    self.running = False
+            return
+            
         if self.game_over:
             action = self.game_over_menu.handle_event(event)
             if action == "restart":
@@ -540,6 +827,18 @@ class Game:
             self.game_over_menu.show()
             resource_manager.play_sound("player_death")
             return
+        
+        # 金币达到目标数量，显示过关
+        if (self.player and self.player.coins >= self.victory_coin_threshold
+                and not self.level_complete and not self.game_over):
+            self.level_complete = True
+            self.victory_menu.show()
+            resource_manager.play_sound("level_up")
+            return
+            
+        if self.level_complete:
+            self.victory_menu.update(pygame.mouse.get_pos())
+            return
             
         if self.game_over:
             self.game_over_menu.update(pygame.mouse.get_pos())
@@ -559,24 +858,55 @@ class Game:
         if self.network_mode and self.remote_player:
             self.remote_player.update(dt)
         
+        # 处理网络同步事件
+        if self.network_mode:
+            self._process_network_enemy_events()
+            self._process_network_item_events()
+            self._process_weapon_attack_events()
+            self._process_enemy_projectile_events()
+        
         if self.enemy_manager and self.player:
-            for enemy in list(self.enemy_manager.enemies):
-                if enemy in self.enemy_manager.enemies and not enemy.alive():
+            # 主机/单机：运行完整的怪物AI；加入方：只应用主机同步的怪物状态
+            if self.network_mode and not self.is_host:
+                self._process_network_enemy_sync()
+                self.player.update_weapons(dt, self.enemy_manager.enemies)
+            else:
+                remote_player = self.remote_player if self.network_mode else None
+                dead_enemies = self.enemy_manager.update(dt, self.player, remote_player)
+                
+                # 处理自然死亡（燃烧等）的怪物
+                for enemy in dead_enemies:
                     self.kill_num += 1
-                    if self.item_manager:
-                        self.item_manager.spawn_item(enemy.rect.x, enemy.rect.y, enemy.type, self.player)
-            
-            self.enemy_manager.update(dt, self.player)
-            self.player.update_weapons(dt, self.enemy_manager.enemies)
+                    self._broadcast_enemy_death(enemy)
+                
+                # 主机广播新创建的敌人投射物
+                if self.network_mode and self.is_host:
+                    self._broadcast_enemy_projectiles()
+                
+                # 主机定时广播怪物全量状态
+                if self.network_mode and self.is_host:
+                    self.enemy_sync_timer += dt
+                    if self.enemy_sync_timer >= self.enemy_sync_interval:
+                        self.enemy_sync_timer = 0
+                        net_client = get_network_client()
+                        net_client.send_enemy_sync(self.enemy_manager.get_all_network_states())
+                
+                self.player.update_weapons(dt, self.enemy_manager.enemies)
             
             if self.item_manager:
                 self.item_manager.update(dt, self.player)
             
             self._check_collisions()
-            
-            if self.player.add_experience(0):
-                self.player.level_up()
-                self.upgrade_menu.show(self.player, self)
+        
+        # 更新敌人投射物视觉副本（客户端）
+        self.visual_enemy_projectiles.update(dt)
+        for projectile in list(self.visual_enemy_projectiles):
+            if not projectile.alive():
+                self.visual_enemy_projectiles.remove(projectile)
+        
+        if self.player and self.player.add_experience(0):
+            self.player.level_up()
+            self.upgrade_menu.show(self.player, self)
         
     def render(self):
         self.screen.fill((0, 0, 0))
@@ -607,6 +937,11 @@ class Game:
             self.enemy_manager.render(self.screen, self.camera_x, self.camera_y, 
                                    self.screen_center_x, self.screen_center_y)
         
+        # 渲染敌人投射物视觉副本（客户端）
+        for projectile in self.visual_enemy_projectiles:
+            if hasattr(projectile, 'render'):
+                projectile.render(self.screen, self.camera_x, self.camera_y)
+        
         if self.item_manager:
             self.item_manager.render(self.screen, self.camera_x, self.camera_y, 
                                   self.screen_center_x, self.screen_center_y)
@@ -629,6 +964,9 @@ class Game:
             
         if self.upgrade_menu.is_active:
             self.upgrade_menu.render()
+            
+        if self.level_complete:
+            self.victory_menu.render()
             
         if self.game_over:
             self.game_over_menu.render()
@@ -670,12 +1008,52 @@ class Game:
             y = i * self.grid_size - offset_y
             pygame.draw.line(self.screen, self.grid_color, (0, y), (self.screen.get_width(), y))
         
+    def _handle_client_weapon_collision(self, projectile, enemy, weapon):
+        """加入方处理武器命中：不上报已无敌敌人，只发送伤害事件并处理子弹销毁"""
+        if not enemy or not enemy.alive() or enemy.enemy_id is None:
+            return
+        
+        # 敌人无敌时不造成伤害，但子弹仍按穿透逻辑处理
+        if getattr(enemy, 'invincible', False):
+            projectile.hit_count = getattr(projectile, 'hit_count', 0) + 1
+            should_destroy = self._should_destroy_projectile(projectile)
+            if should_destroy:
+                projectile.kill()
+            return
+        
+        # 发送伤害事件给主机
+        damage = getattr(projectile, 'damage', 0)
+        self._send_enemy_damage(enemy, damage)
+        resource_manager.play_sound("hit")
+        
+        # 处理命中计数与穿透
+        projectile.hit_count = getattr(projectile, 'hit_count', 0) + 1
+        if self._should_destroy_projectile(projectile):
+            projectile.kill()
+    
+    def _should_destroy_projectile(self, projectile):
+        """判断投射物是否应该被销毁"""
+        can_penetrate = getattr(projectile, 'can_penetrate', False)
+        if not can_penetrate:
+            return True
+        max_penetration = getattr(projectile, 'max_penetration', 1)
+        hit_count = getattr(projectile, 'hit_count', 0)
+        if hit_count < max_penetration:
+            # 每次穿透后降低伤害
+            reduction = getattr(projectile, 'penetration_damage_reduction', 0)
+            projectile.damage *= (1 - reduction)
+            return False
+        return True
+    
     def _check_collisions(self):
         if not self.player or not self.enemy_manager:
             return
             
         for weapon in self.player.weapons:
             for projectile in weapon.get_projectiles():
+                # 视觉模式（网络同步的特效副本）不参与碰撞和伤害
+                if getattr(projectile, 'visual_only', False):
+                    continue
                 for enemy in self.enemy_manager.enemies:
                     dx = enemy.rect.x - projectile.world_x
                     dy = enemy.rect.y - projectile.world_y
@@ -687,46 +1065,146 @@ class Game:
                         projectile_rect.centery = projectile.world_y
                         
                         if apply_mask_collision(enemy, projectile):
-                            should_destroy = weapon.handle_collision(projectile, enemy, self.enemy_manager.enemies)
-                            resource_manager.play_sound("hit")
-                            
-                            if enemy.health <= 0:
-                                self.kill_num += 1
-                                if self.item_manager:
-                                    self.item_manager.spawn_item(enemy.rect.x, enemy.rect.y, enemy.type, self.player)
-                                self.enemy_manager.remove_enemy(enemy)
-                                resource_manager.play_sound("enemy_death")
+                            # 加入方：不本地扣血，只上报伤害
+                            if self.network_mode and not self.is_host:
+                                self._handle_client_weapon_collision(projectile, enemy, weapon)
+                            else:
+                                # 主机/单机：本地处理伤害
+                                should_destroy = weapon.handle_collision(projectile, enemy, self.enemy_manager.enemies)
+                                resource_manager.play_sound("hit")
                                 
-                            if should_destroy:
-                                projectile.kill()
+                                if enemy.health <= 0:
+                                    self.kill_num += 1
+                                    self._broadcast_enemy_death(enemy)
+                                    self.enemy_manager.remove_enemy(enemy)
+                                    resource_manager.play_sound("enemy_death")
+                                    
+                                if should_destroy:
+                                    projectile.kill()
+        
+        # 敌人碰撞玩家：仅单机或主机处理伤害；加入方通过主机同步的伤害事件扣血
+        if not self.network_mode or self.is_host:
+            players = [self.player]
+            if self.network_mode and self.remote_player:
+                players.append(self.remote_player)
+            
+            for player in players:
+                self._handle_enemy_player_collision(player)
+        else:
+            self._process_player_damage_events()
+        
+    def _handle_enemy_player_collision(self, player):
+        """处理敌人对单个玩家造成的伤害（单机或主机端）"""
+        if getattr(player, 'invincible', False):
+            return
+        
+        player_rect = player.rect.copy()
+        player_rect.centerx = player.world_x
+        player_rect.centery = player.world_y
         
         for enemy in self.enemy_manager.enemies:
-            if not self.player.invincible:
-                player_rect = self.player.rect.copy()
-                player_rect.centerx = self.player.world_x
-                player_rect.centery = self.player.world_y
-                
-                if hasattr(enemy, 'projectiles'):
-                    enemy.attack_player(self.player)
-                
-                if player_rect.colliderect(enemy.rect):
-                    if enemy.type == 'skt' and getattr(enemy, 'current_form', 1) == 1:
-                        continue
+            # 远程/特殊攻击（子弹等）
+            if hasattr(enemy, 'projectiles'):
+                enemy.attack_player(player)
+                # 对远程玩家（镜像）做宽松的子弹命中补充检测，补偿网络同步延迟
+                if self.network_mode and player is self.remote_player:
+                    self._apply_loose_projectile_hits(enemy, player)
+            
+            # 近战碰撞
+            if enemy.type == 'skt' and getattr(enemy, 'current_form', 1) == 1:
+                continue
+            
+            if enemy.type == 'plant':
+                continue
+            
+            # 远程玩家（镜像）使用矩形碰撞提高命中率，本地玩家使用精确遮罩
+            if self.network_mode and player is self.remote_player:
+                collided = player_rect.colliderect(enemy.rect)
+            else:
+                saved_rect = player.rect
+                player.rect = player_rect
+                collided = apply_mask_collision(player, enemy)
+                player.rect = saved_rect
+            if collided:
+                damage_amount = enemy.damage * 0.5
+                if player.take_damage(damage_amount):
+                    resource_manager.play_sound("player_hurt")
                     
-                    if enemy.type == 'plant':
-                        continue
+                    # 计算击退方向和距离
+                    kb_dx, kb_dy, kb_dist = self._calc_knockback_vector(player, enemy)
                     
-                    saved_rect = self.player.rect
-                    self.player.rect = player_rect
-                    collided = apply_mask_collision(self.player, enemy)
-                    self.player.rect = saved_rect
-                    if collided:
-                        damage_amount = enemy.damage * 0.5
-                        if self.player.take_damage(damage_amount):
-                            resource_manager.play_sound("player_hurt")
-                            self._knockback_player(enemy)
-                            break
+                    if player is self.player:
+                        # 本地玩家直接击退
+                        self._apply_knockback_vector(player, kb_dx, kb_dy, kb_dist)
+                    elif self.network_mode and player is self.remote_player:
+                        # 镜像玩家受伤，通知加入方并同步击退
+                        self._send_player_damage(damage_amount, kb_dx, kb_dy, kb_dist)
+                    break
+    
+    def _apply_loose_projectile_hits(self, enemy, player):
+        """对远程玩家使用更宽松的敌人子弹命中判定，补偿网络延迟"""
+        for projectile in list(enemy.projectiles):
+            px = getattr(projectile, 'x', getattr(projectile, 'world_x', 0))
+            py = getattr(projectile, 'y', getattr(projectile, 'world_y', 0))
+            dx = px - player.world_x
+            dy = py - player.world_y
+            distance = math.sqrt(dx * dx + dy * dy)
+            
+            # 宽松半径：玩家半宽 + 子弹半径 + 20 像素容差
+            hit_radius = player.rect.width / 2 + getattr(projectile, 'radius', 8) + 20
+            
+            if distance < hit_radius:
+                damage = getattr(projectile, 'damage', getattr(enemy, 'damage', 10))
+                if player.take_damage(damage):
+                    resource_manager.play_sound("player_hurt")
+                    self._send_player_damage(damage, 0, 0, 0)
+                projectile.kill()
+                break
+    
+    def _calc_knockback_vector(self, player, enemy):
+        """计算击退方向与距离
         
+        Returns:
+            tuple: (dx, dy, distance)
+        """
+        dx = player.world_x - enemy.rect.centerx
+        dy = player.world_y - enemy.rect.centery
+        distance = math.sqrt(dx * dx + dy * dy)
+        if distance > 0:
+            dx /= distance
+            dy /= distance
+        return dx, dy, 50.0
+    
+    def _apply_knockback_vector(self, player, dx, dy, distance):
+        """对指定玩家应用击退"""
+        if distance <= 0:
+            return
+        player.world_x += dx * distance
+        player.world_y += dy * distance
+    
+    def _send_player_damage(self, amount, knockback_dx=0.0, knockback_dy=0.0, knockback_distance=0.0):
+        """主机通知加入方玩家受到伤害"""
+        if not self.network_mode or not self.is_host:
+            return
+        net_client = get_network_client()
+        net_client.send_player_damage(amount, "enemy", knockback_dx, knockback_dy, knockback_distance)
+    
+    def _process_player_damage_events(self):
+        """加入方处理主机同步的玩家受伤事件"""
+        if not self.network_mode or self.is_host or not self.player:
+            return
+        net_client = get_network_client()
+        events = net_client.get_player_damage_events()
+        for event in events:
+            amount = event.get("amount", 0)
+            if amount > 0 and self.player.take_damage(amount):
+                resource_manager.play_sound("player_hurt")
+                # 应用击退（take_damage 内部已设置无敌）
+                kb_dx = event.get("knockback_dx", 0.0)
+                kb_dy = event.get("knockback_dy", 0.0)
+                kb_dist = event.get("knockback_distance", 0.0)
+                self._apply_knockback_vector(self.player, kb_dx, kb_dy, kb_dist)
+    
     def _update_game_state(self):
         current_level = int(self.game_time // 60) + 1
         

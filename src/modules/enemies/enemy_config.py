@@ -57,8 +57,8 @@ ENEMY_CONFIGS = {
     # 蝙蝠 - 快速但脆弱的敌人
     "bat": {
         "health": 60,
-        "damage": 20,           # 基础伤害（从8提高到20）
-        "speed": 200,
+        "damage": 25,           # 基础伤害（从8提高到20）
+        "speed": 280,
         "score_value": 80,
         "animation_speed": 0.0333,
         "scale": 2.0,

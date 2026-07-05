@@ -254,6 +254,11 @@ class FrostNovaProjectile(pygame.sprite.Sprite):
             explosion = FrostExplosionEffect(explosion_x, explosion_y, self.explosion_radius)
             self.effects_group.add(explosion)
         
+        # 视觉模式（网络同步的特效副本）不造成伤害和状态效果
+        if getattr(self, 'visual_only', False):
+            self.kill()
+            return
+        
         # 如果有敌人列表，对范围内敌人造成伤害和减速效果
         if enemies:
             # 创建可能受影响的敌人列表（预筛选）
@@ -387,9 +392,16 @@ class FrostNova(Weapon):
             self.current_stats,
             direction=direction
         )
+        # 保存原始发射方向，用于网络特效同步
+        nova.spawn_direction = direction
         # 设置特效组，用于后续添加爆炸效果
         nova.effects_group = self.effects
         self.projectiles.add(nova)
+        
+        # 通知外部投射物已创建（用于网络特效同步）
+        if hasattr(self.player, 'weapon_manager') and self.player.weapon_manager:
+            self.player.weapon_manager.notify_projectile_created(self.type, nova)
+        
         return nova  # 返回创建的投射物
 
     def _cast_bonus_novas(self, count):

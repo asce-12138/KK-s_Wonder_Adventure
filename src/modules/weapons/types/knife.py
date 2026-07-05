@@ -185,6 +185,10 @@ class Knife(Weapon):
         )
         self.projectiles.add(knife)
         
+        # 通知外部投射物已创建（用于网络特效同步）
+        if hasattr(self.player, 'weapon_manager') and self.player.weapon_manager:
+            self.player.weapon_manager.notify_projectile_created(self.type, knife)
+        
     def render(self, screen, camera_x, camera_y):
         # 渲染所有投掷出去的小刀
         for knife in self.projectiles:

@@ -64,7 +64,7 @@ class ExplosionEffect(pygame.sprite.Sprite):
                                  screen_y - self.image.get_height() // 2))
 
 class FireballProjectile(pygame.sprite.Sprite):
-    def __init__(self, x, y, target, stats, is_mega=False):
+    def __init__(self, x, y, target, stats, is_mega=False, fixed_direction=None):
         super().__init__()
         # 加载基础图像
         self.base_image = resource_manager.load_image('weapon_fireball', 'images/weapons/fireball_32x32.png')
@@ -80,6 +80,9 @@ class FireballProjectile(pygame.sprite.Sprite):
         self.world_y = float(y)
         self.rect.centerx = self.world_x
         self.rect.centery = self.world_y
+        
+        # 可选的固定方向（用于网络特效同步，避免追踪近处目标导致旋转）
+        self.fixed_direction = fixed_direction
         
         # 目标信息
         self.target = target
@@ -123,6 +126,21 @@ class FireballProjectile(pygame.sprite.Sprite):
         
     def _update_direction(self):
         """更新朝向目标的方向"""
+        # 如果指定了固定方向，优先使用固定方向（网络特效同步）
+        if self.fixed_direction is not None:
+            dx = self.fixed_direction[0]
+            dy = self.fixed_direction[1]
+            self.direction_x = dx
+            self.direction_y = dy
+            
+            # 更新图像旋转
+            angle = math.degrees(math.atan2(-dy, dx))
+            self.image = pygame.transform.rotate(self.base_image, angle)
+            new_rect = self.image.get_rect()
+            new_rect.center = self.rect.center
+            self.rect = new_rect
+            return
+        
         if self.target and self.target.alive():
             # 使用世界坐标计算方向
             dx = self.target.rect.centerx - self.world_x
@@ -185,6 +203,11 @@ class FireballProjectile(pygame.sprite.Sprite):
         if self.effects_group is not None:
             explosion = ExplosionEffect(explosion_x, explosion_y, self.explosion_radius, scale=explosion_scale)
             self.effects_group.add(explosion)
+        
+        # 视觉模式（网络同步的特效副本）不造成伤害和状态效果
+        if getattr(self, 'visual_only', False):
+            self.kill()
+            return
         
         # 如果有敌人列表，对范围内敌人造成伤害（优化性能）
         if enemies:
@@ -355,6 +378,11 @@ class Fireball(Weapon):
         # 设置特效组，用于后续添加爆炸效果
         fireball.effects_group = self.effects
         self.projectiles.add(fireball)
+        
+        # 通知外部投射物已创建（用于网络特效同步）
+        if hasattr(self.player, 'weapon_manager') and self.player.weapon_manager:
+            self.player.weapon_manager.notify_projectile_created(self.type, fireball)
+        
         return fireball
         
     def render(self, screen, camera_x, camera_y):

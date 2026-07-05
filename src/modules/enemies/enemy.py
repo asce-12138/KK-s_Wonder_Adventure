@@ -35,6 +35,9 @@ class Enemy(pygame.sprite.Sprite, ABC):
         # 存活状态
         self._alive = True
         
+        # 网络同步用唯一ID，由 EnemyManager 分配
+        self.enemy_id = None
+        
         # 攻击冷却
         self.attack_cooldown = 0
         self.attack_cooldown_time = self.config.get("attack_cooldown", 0.5)  # 攻击冷却时间（秒）
@@ -448,3 +451,38 @@ class Enemy(pygame.sprite.Sprite, ABC):
             bool: 如果敌人还活着返回 True，否则返回 False
         """
         return self._alive and self.health > 0
+    
+    def to_network_state(self):
+        """导出怪物网络同步状态
+        
+        Returns:
+            dict: 包含 id、类型、位置、血量、朝向等信息
+        """
+        return {
+            "id": self.enemy_id,
+            "enemy_type": self.type,
+            "x": self.rect.x,
+            "y": self.rect.y,
+            "health": self.health,
+            "max_health": self.max_health,
+            "facing_right": self.facing_right
+        }
+    
+    def apply_network_state(self, state):
+        """根据主机同步状态更新怪物状态
+        
+        Args:
+            state: 网络同步状态字典
+        """
+        if "id" in state:
+            self.enemy_id = state["id"]
+        if "x" in state:
+            self.rect.x = state["x"]
+        if "y" in state:
+            self.rect.y = state["y"]
+        if "health" in state:
+            self.health = state["health"]
+        if "max_health" in state:
+            self.max_health = state["max_health"]
+        if "facing_right" in state:
+            self.facing_right = state["facing_right"]

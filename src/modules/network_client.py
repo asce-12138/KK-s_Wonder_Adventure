@@ -19,6 +19,15 @@ class NetworkClient:
         self.player_id = None
         self.send_queue = queue.Queue()
         self.receive_queue = queue.Queue()
+        
+        # 怪物/掉落物/武器特效/敌人子弹/玩家受伤同步队列
+        self.enemy_sync_queue = queue.Queue()
+        self.enemy_event_queue = queue.Queue()
+        self.item_event_queue = queue.Queue()
+        self.weapon_attack_queue = queue.Queue()
+        self.enemy_projectile_queue = queue.Queue()
+        self.player_damage_queue = queue.Queue()
+        
         self.recv_thread = None
         self.send_thread = None
         self.lock = threading.Lock()
@@ -196,6 +205,24 @@ class NetworkClient:
         elif msg_type == "player_data":
             self.receive_queue.put(message)
             
+        elif msg_type == "enemy_sync":
+            self.enemy_sync_queue.put(message)
+            
+        elif msg_type in ("enemy_spawn", "enemy_death", "enemy_damage"):
+            self.enemy_event_queue.put(message)
+            
+        elif msg_type in ("item_spawn", "item_pickup", "item_remove"):
+            self.item_event_queue.put(message)
+            
+        elif msg_type == "weapon_attack":
+            self.weapon_attack_queue.put(message)
+            
+        elif msg_type == "enemy_projectile":
+            self.enemy_projectile_queue.put(message)
+            
+        elif msg_type == "player_damage":
+            self.player_damage_queue.put(message)
+            
         elif msg_type == "heartbeat":
             self.last_heartbeat = time.time()
     
@@ -230,6 +257,97 @@ class NetworkClient:
         }
         self.send_queue.put(data)
     
+    def send_enemy_sync(self, enemy_states):
+        """发送怪物全量同步状态（主机使用）"""
+        if not self.connected or not enemy_states:
+            return
+        self.send_queue.put({
+            "type": "enemy_sync",
+            "enemies": enemy_states,
+            "timestamp": time.time()
+        })
+    
+    def send_enemy_spawn(self, state):
+        """发送怪物生成事件（主机使用）"""
+        if not self.connected or not state:
+            return
+        data = {"type": "enemy_spawn", "timestamp": time.time()}
+        data.update(state)
+        self.send_queue.put(data)
+    
+    def send_enemy_death(self, enemy_id, x, y, enemy_type):
+        """发送怪物死亡事件（主机使用）"""
+        if not self.connected:
+            return
+        self.send_queue.put({
+            "type": "enemy_death",
+            "enemy_id": enemy_id,
+            "x": x,
+            "y": y,
+            "enemy_type": enemy_type,
+            "timestamp": time.time()
+        })
+    
+    def send_enemy_damage(self, enemy_id, damage):
+        """发送怪物伤害事件（加入方使用）"""
+        if not self.connected:
+            return
+        self.send_queue.put({
+            "type": "enemy_damage",
+            "enemy_id": enemy_id,
+            "damage": damage,
+            "timestamp": time.time()
+        })
+    
+    def send_item_spawn(self, item_id, item_type, x, y):
+        """发送掉落物生成事件（主机使用）"""
+        if not self.connected:
+            return
+        self.send_queue.put({
+            "type": "item_spawn",
+            "item_id": item_id,
+            "item_type": item_type,
+            "x": x,
+            "y": y,
+            "timestamp": time.time()
+        })
+    
+    def send_item_pickup(self, item_id):
+        """发送掉落物拾取事件（双方都可能使用）"""
+        if not self.connected:
+            return
+        self.send_queue.put({
+            "type": "item_pickup",
+            "item_id": item_id,
+            "timestamp": time.time()
+        })
+    
+    def send_item_remove(self, item_id):
+        """发送掉落物移除事件（主机使用）"""
+        if not self.connected:
+            return
+        self.send_queue.put({
+            "type": "item_remove",
+            "item_id": item_id,
+            "timestamp": time.time()
+        })
+    
+    def send_weapon_attack(self, weapon_type, x, y, direction, level=1, is_mega=False):
+        """发送武器攻击特效事件"""
+        if not self.connected:
+            return
+        self.send_queue.put({
+            "type": "weapon_attack",
+            "weapon_type": weapon_type,
+            "x": x,
+            "y": y,
+            "direction_x": direction.x if hasattr(direction, 'x') else direction[0],
+            "direction_y": direction.y if hasattr(direction, 'y') else direction[1],
+            "level": level,
+            "is_mega": is_mega,
+            "timestamp": time.time()
+        })
+    
     def get_remote_player_data(self):
         """
         获取远程玩家的最新数据
@@ -244,6 +362,88 @@ class NetworkClient:
             except queue.Empty:
                 break
         return latest_data
+    
+    def get_enemy_sync_data(self):
+        """获取最新的怪物同步数据，消费队列中所有旧数据只保留最新"""
+        latest_data = None
+        while not self.enemy_sync_queue.empty():
+            try:
+                latest_data = self.enemy_sync_queue.get_nowait()
+            except queue.Empty:
+                break
+        return latest_data
+    
+    def get_enemy_events(self):
+        """获取所有待处理的怪物事件"""
+        events = []
+        while not self.enemy_event_queue.empty():
+            try:
+                events.append(self.enemy_event_queue.get_nowait())
+            except queue.Empty:
+                break
+        return events
+    
+    def get_item_events(self):
+        """获取所有待处理的掉落物事件"""
+        events = []
+        while not self.item_event_queue.empty():
+            try:
+                events.append(self.item_event_queue.get_nowait())
+            except queue.Empty:
+                break
+        return events
+    
+    def get_weapon_attack_events(self):
+        """获取所有待处理的武器攻击特效事件"""
+        events = []
+        while not self.weapon_attack_queue.empty():
+            try:
+                events.append(self.weapon_attack_queue.get_nowait())
+            except queue.Empty:
+                break
+        return events
+    
+    def send_enemy_projectile(self, event):
+        """发送敌人投射物创建事件（主机使用）"""
+        if not self.connected or not event:
+            return
+        data = {"type": "enemy_projectile", "timestamp": time.time()}
+        data.update(event)
+        self.send_queue.put(data)
+    
+    def get_enemy_projectile_events(self):
+        """获取所有待处理的敌人投射物事件"""
+        events = []
+        while not self.enemy_projectile_queue.empty():
+            try:
+                events.append(self.enemy_projectile_queue.get_nowait())
+            except queue.Empty:
+                break
+        return events
+    
+    def send_player_damage(self, amount, damage_type="enemy", knockback_dx=0.0, knockback_dy=0.0, knockback_distance=0.0):
+        """发送玩家受伤事件（主机通知加入方）"""
+        if not self.connected:
+            return
+        self.send_queue.put({
+            "type": "player_damage",
+            "amount": amount,
+            "damage_type": damage_type,
+            "knockback_dx": knockback_dx,
+            "knockback_dy": knockback_dy,
+            "knockback_distance": knockback_distance,
+            "timestamp": time.time()
+        })
+    
+    def get_player_damage_events(self):
+        """获取所有待处理的玩家受伤事件"""
+        events = []
+        while not self.player_damage_queue.empty():
+            try:
+                events.append(self.player_damage_queue.get_nowait())
+            except queue.Empty:
+                break
+        return events
     
     def _handle_disconnect(self):
         """处理断开连接"""

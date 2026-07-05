@@ -26,6 +26,11 @@ class RemotePlayer:
         self.facing_right = True
         self.is_hurt = False
         
+        # 无敌状态（用于主机端本地伤害判定）
+        self.invincible = False
+        self.invincible_timer = 0.0
+        self.invincible_duration = 2.0
+        
         # 动画相关
         self.current_animation = 'idle'
         self.animations = {}
@@ -47,6 +52,19 @@ class RemotePlayer:
         
         # 设置初始图像
         self._update_image()
+        
+        # 视觉武器特效（仅渲染，不参与碰撞和伤害计算）
+        self.visual_projectiles = pygame.sprite.Group()
+        self.visual_effects = pygame.sprite.Group()
+    
+    def add_visual_projectile(self, projectile):
+        """添加一个视觉投射物（由 game.py 创建并传入）
+        
+        Args:
+            projectile: 视觉投射物实例
+        """
+        if projectile:
+            self.visual_projectiles.add(projectile)
     
     def _init_animations(self):
         """初始化动画帧"""
@@ -144,6 +162,25 @@ class RemotePlayer:
                 current_frame = anim_frames[self.current_frame_index]
             
             self._update_image()
+        
+        # 更新视觉武器特效
+        self.visual_projectiles.update(dt)
+        self.visual_effects.update(dt)
+        
+        # 清理已销毁的特效
+        for projectile in list(self.visual_projectiles):
+            if not projectile.alive():
+                self.visual_projectiles.remove(projectile)
+        for effect in list(self.visual_effects):
+            if not effect.alive():
+                self.visual_effects.remove(effect)
+        
+        # 更新无敌状态
+        if self.invincible:
+            self.invincible_timer -= dt
+            if self.invincible_timer <= 0:
+                self.invincible = False
+                self.invincible_timer = 0
     
     def _update_image(self):
         """更新当前显示的图像"""
@@ -210,6 +247,14 @@ class RemotePlayer:
             
             # 绘制血条
             self._render_health_bar(screen, screen_x, screen_y)
+        
+        # 渲染视觉武器特效（在玩家上层或下层均可，这里统一在玩家之后渲染）
+        for projectile in self.visual_projectiles:
+            if hasattr(projectile, 'render'):
+                projectile.render(screen, camera_x, camera_y)
+        for effect in self.visual_effects:
+            if hasattr(effect, 'render'):
+                effect.render(screen, camera_x, camera_y)
     
     def _render_health_bar(self, screen, screen_x, screen_y):
         """
@@ -249,3 +294,23 @@ class RemotePlayer:
         
         # 血条边框
         pygame.draw.rect(screen, (255, 255, 255), (bar_x, bar_y, bar_width, bar_height), 1)
+    
+    def take_damage(self, amount):
+        """受到伤害（仅用于主机端本地计算或网络同步测试）
+        
+        注意：联机模式下远程玩家的血量主要由网络同步更新，
+        此方法主要用于主机端对镜像玩家做伤害判定。
+        
+        Args:
+            amount: 伤害数值
+            
+        Returns:
+            bool: 是否成功造成伤害
+        """
+        if amount <= 0 or self.invincible:
+            return False
+        self.health = max(0, self.health - amount)
+        self.is_hurt = True
+        self.invincible = True
+        self.invincible_timer = self.invincible_duration
+        return True

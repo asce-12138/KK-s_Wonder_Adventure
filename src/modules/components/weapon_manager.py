@@ -27,6 +27,23 @@ class WeaponManager(Component):
         
         # 可用武器类型
         self.available_weapons = {}  # 将在player类中初始化
+        
+        # 投射物创建回调，用于网络特效同步
+        # 回调签名: callback(weapon_type, projectile)
+        self.on_projectile_created = None
+    
+    def notify_projectile_created(self, weapon_type, projectile):
+        """通知外部有投射物被创建（用于网络特效同步）
+        
+        Args:
+            weapon_type: 武器类型名称
+            projectile: 创建的投射物实例
+        """
+        if self.on_projectile_created:
+            try:
+                self.on_projectile_created(weapon_type, projectile)
+            except Exception as e:
+                print(f"[WeaponManager] 投射物创建回调出错: {e}")
     
     def add_weapon(self, weapon_type):
         """

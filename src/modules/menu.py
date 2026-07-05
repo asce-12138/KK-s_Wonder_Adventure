@@ -167,8 +167,9 @@ class PauseMenu(Menu):
             self.option_rects.append(text_rect.inflate(20, 10))
 
 class GameOverMenu(Menu):
-    def __init__(self, screen):
+    def __init__(self, screen, title="游戏结束"):
         super().__init__(screen)
+        self.title = title
         self.options = ["重新开始", "返回主菜单", "退出游戏"]
         self.selected_index = 0
         self.option_rects = []
@@ -231,7 +232,7 @@ class GameOverMenu(Menu):
         self._draw_menu_background()
         
         # 绘制标题
-        title = self.title_font.render("游戏结束", True, self.title_color)
+        title = self.title_font.render(self.title, True, self.title_color)
         title_rect = title.get_rect(centerx=self.x + self.width//2, y=self.y + 20)
         self.screen.blit(title, title_rect)
         

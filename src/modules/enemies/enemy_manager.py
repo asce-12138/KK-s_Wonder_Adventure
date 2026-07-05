@@ -26,6 +26,14 @@ class EnemyManager:
         self.map_boundaries = None  # (min_x, min_y, max_x, max_y)
         self.current_map = None  # 当前地图名称
         
+        # 网络同步用敌人ID计数器，仅主机使用
+        self.next_enemy_id = 1
+        self.authoritative = True  # 是否为权威端（主机）
+        
+        # 已发送过创建事件的敌人投射物（id -> projectile，仅主机使用）
+        # 注意：会在 collect_new_projectile_events 中自动清理已销毁的投射物
+        self.sent_projectile_refs = {}
+        
     def set_map_boundaries(self, min_x, min_y, max_x, max_y):
         """设置地图边界
         
@@ -97,11 +105,21 @@ class EnemyManager:
             enemy.damage = damage
             
         if enemy:
+            if self.authoritative and enemy.enemy_id is None:
+                enemy.enemy_id = self.next_enemy_id
+                self.next_enemy_id += 1
             self.enemies.append(enemy)
             
         return enemy
         
-    def update(self, dt, player):
+    def update(self, dt, local_player, remote_player=None):
+        """更新敌人管理器
+        
+        Args:
+            dt: 时间增量
+            local_player: 本地玩家对象
+            remote_player: 远程玩家对象（可选），提供时怪物会追击最近玩家
+        """
         self.game_time += dt
         self.spawn_timer += dt
         
@@ -120,30 +138,104 @@ class EnemyManager:
                 enemy.max_health = int(enemy.max_health * 1.5)
                 enemy.health = int(enemy.health * 1.5)
         
-        # 根据时间和玩家等级生成敌人
-        if self.spawn_timer >= self.spawn_interval:
+        # 根据时间和玩家等级生成敌人（仅权威端）
+        if self.authoritative and self.spawn_timer >= self.spawn_interval:
             self.spawn_timer = 0
-            self.random_spawn_enemy(player)
+            self.random_spawn_enemy(local_player)
             
-        # 蝙蝠生成：只在森林地图生成，每60秒一只
-        if player.level >= 1 and self.current_map not in ['ocean_map', 'volcano_map']:
+        # 蝙蝠生成：只在森林地图生成，每60秒一只（仅权威端）
+        if self.authoritative and local_player.level >= 1 and self.current_map not in ['ocean_map', 'volcano_map']:
             self.bat_spawn_timer += dt
             if self.bat_spawn_timer >= 60:  # 每60秒生成一只蝙蝠
                 self.bat_spawn_timer = 0
-                self.spawn_bat(player)
+                self.spawn_bat(local_player)
             
         # 更新所有敌人
+        players = [local_player]
+        if remote_player is not None:
+            players.append(remote_player)
+        
+        dead_enemies = []
         for enemy in self.enemies[:]:  # 使用切片创建副本以避免在迭代时修改列表
-            enemy.update(dt, player)
+            target_player = self._find_nearest_player(enemy, players)
+            enemy.update(dt, target_player)
             
             # 检查敌人是否已死亡（包括被燃烧伤害杀死的）
             if not enemy.alive():
+                dead_enemies.append(enemy)
                 try:
                     self.enemies.remove(enemy)
                     # 注意：在这里我们不再播放死亡音效，因为在enemy.py中已经播放
                 except ValueError:
                     # 如果敌人已经被移除，忽略错误
                     pass
+        
+        return dead_enemies
+    
+    def collect_new_projectile_events(self):
+        """收集新创建的敌人投射物事件（仅主机使用）
+        
+        Returns:
+            list: 新投射物事件字典列表
+        """
+        events = []
+        current_ids = set()
+        
+        for enemy in self.enemies:
+            if not hasattr(enemy, 'projectiles'):
+                continue
+            for projectile in enemy.projectiles:
+                pid = id(projectile)
+                current_ids.add(pid)
+                if pid in self.sent_projectile_refs:
+                    continue
+                self.sent_projectile_refs[pid] = projectile
+                
+                event = {
+                    "enemy_id": getattr(enemy, 'enemy_id', None),
+                    "enemy_type": getattr(enemy, 'type', 'unknown'),
+                    "x": getattr(projectile, 'x', getattr(projectile, 'world_x', 0)),
+                    "y": getattr(projectile, 'y', getattr(projectile, 'world_y', 0)),
+                    "direction_x": getattr(projectile, 'direction_x', 0.0),
+                    "direction_y": getattr(projectile, 'direction_y', 0.0),
+                    "speed": getattr(projectile, 'speed', 200),
+                    "lifetime": getattr(projectile, 'lifetime', 5.0),
+                    "bullet_type": getattr(projectile, 'bullet_type', 1),
+                }
+                events.append(event)
+        
+        # 清理已销毁的投射物引用，避免内存泄漏
+        destroyed_ids = [pid for pid, projectile in self.sent_projectile_refs.items() if not projectile.alive()]
+        for pid in destroyed_ids:
+            self.sent_projectile_refs.pop(pid, None)
+        
+        return events
+    
+    def _find_nearest_player(self, enemy, players):
+        """找到离敌人最近的玩家
+        
+        Args:
+            enemy: 敌人对象
+            players: 玩家对象列表
+            
+        Returns:
+            最近的玩家对象
+        """
+        if not players:
+            return None
+        if len(players) == 1:
+            return players[0]
+        
+        nearest = players[0]
+        min_distance = float('inf')
+        for player in players:
+            dx = player.world_x - enemy.rect.x
+            dy = player.world_y - enemy.rect.y
+            distance = math.sqrt(dx * dx + dy * dy)
+            if distance < min_distance:
+                min_distance = distance
+                nearest = player
+        return nearest
             
     def render(self, screen, camera_x, camera_y, screen_center_x, screen_center_y):
         for enemy in self.enemies:
@@ -158,6 +250,111 @@ class EnemyManager:
     def remove_enemy(self, enemy):
         if enemy in self.enemies:
             self.enemies.remove(enemy)
+    
+    def get_enemy_by_id(self, enemy_id):
+        """根据ID获取敌人
+        
+        Args:
+            enemy_id: 敌人唯一ID
+            
+        Returns:
+            Enemy or None
+        """
+        for enemy in self.enemies:
+            if enemy.enemy_id == enemy_id:
+                return enemy
+        return None
+    
+    def remove_enemy_by_id(self, enemy_id):
+        """根据ID移除敌人
+        
+        Args:
+            enemy_id: 敌人唯一ID
+        """
+        enemy = self.get_enemy_by_id(enemy_id)
+        if enemy:
+            self.enemies.remove(enemy)
+    
+    def spawn_enemy_from_network(self, state):
+        """根据网络状态生成或更新敌人（加入方使用）
+        
+        Args:
+            state: 敌人网络状态字典
+            
+        Returns:
+            Enemy: 生成或更新的敌人
+        """
+        enemy_id = state.get("id")
+        enemy_type = state.get("enemy_type")
+        x = state.get("x", 0)
+        y = state.get("y", 0)
+        health = state.get("health")
+        max_health = state.get("max_health")
+        
+        enemy = self.get_enemy_by_id(enemy_id)
+        if enemy is None:
+            # 创建新敌人
+            enemy = self.spawn_enemy(enemy_type, x, y)
+            if enemy:
+                enemy.enemy_id = enemy_id
+        
+        if enemy:
+            enemy.apply_network_state(state)
+        
+        return enemy
+    
+    def apply_enemy_sync(self, enemy_states):
+        """应用主机同步的怪物状态（加入方使用）
+        
+        Args:
+            enemy_states: 怪物状态列表
+        """
+        if not enemy_states:
+            return
+        
+        # 记录当前所有敌人的ID
+        current_ids = {enemy.enemy_id for enemy in self.enemies}
+        synced_ids = set()
+        
+        for state in enemy_states:
+            enemy_id = state.get("id")
+            if enemy_id is None:
+                continue
+            synced_ids.add(enemy_id)
+            self.spawn_enemy_from_network(state)
+        
+        # 移除主机端已经死亡的怪物
+        removed_ids = current_ids - synced_ids
+        for enemy_id in removed_ids:
+            self.remove_enemy_by_id(enemy_id)
+    
+    def apply_damage_event(self, enemy_id, damage):
+        """处理加入方上报的伤害事件（仅主机使用）
+        
+        Args:
+            enemy_id: 敌人ID
+            damage: 伤害值
+            
+        Returns:
+            bool: 是否成功造成伤害
+        """
+        enemy = self.get_enemy_by_id(enemy_id)
+        if enemy and enemy.alive():
+            enemy.take_damage(damage)
+            return True
+        return False
+    
+    def get_all_network_states(self):
+        """获取所有怪物的网络状态（仅主机使用）
+        
+        Returns:
+            list: 怪物状态字典列表
+        """
+        states = []
+        for enemy in self.enemies:
+            if enemy.alive():
+                states.append(enemy.to_network_state())
+        return states
             
     def random_spawn_enemy(self, player):
         """在玩家周围随机位置生成敌人，确保在地图边界内"""
