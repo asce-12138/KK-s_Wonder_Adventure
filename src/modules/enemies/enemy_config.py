@@ -3,172 +3,172 @@
 定义所有敌人的基础属性、技能和难度相关的缩放系数
 """
 
-# 全局难度系数设置
+# 全局难度系数设置 - 根据游戏难度调整敌人属性
 DIFFICULTY_MULTIPLIERS = {
-    "health": {  # 健康值随难度增长的系数
-        "easy": 0.8,
-        "normal": 1.0,
-        "hard": 1.3,
-        "nightmare": 1.8
+    "health": {  # 生命值难度系数
+        "easy": 0.8,       # 简单难度：80%生命值
+        "normal": 1.0,     # 普通难度：100%生命值
+        "hard": 1.3,       # 困难难度：130%生命值
+        "nightmare": 1.8   # 噩梦难度：180%生命值
     },
-    "damage": {  # 伤害值随难度增长的系数
-        "easy": 0.7,
-        "normal": 1.0,
-        "hard": 1.5,
-        "nightmare": 2.0
+    "damage": {  # 伤害值难度系数
+        "easy": 0.7,       # 简单难度：70%伤害
+        "normal": 1.0,     # 普通难度：100%伤害
+        "hard": 1.5,       # 困难难度：150%伤害
+        "nightmare": 2.0   # 噩梦难度：200%伤害
     },
-    "speed": {  # 速度随难度增长的系数
-        "easy": 0.9,
-        "normal": 1.0,
-        "hard": 1.2,
-        "nightmare": 1.5
+    "speed": {  # 移动速度难度系数
+        "easy": 0.9,       # 简单难度：90%速度
+        "normal": 1.0,     # 普通难度：100%速度
+        "hard": 1.2,       # 困难难度：120%速度
+        "nightmare": 1.5   # 噩梦难度：150%速度
     }
 }
 
-# 敌人等级系数 (游戏时间增加时应用)
+# 敌人等级系数 - 随游戏时间（每分钟一级）增长
 LEVEL_SCALING = {
-    "health_per_level": 0,  # 每级不增加生命值
-    "damage_per_level": 0.05,  # 每级增加5%伤害
-    "speed_per_level": 0.05,   # 每级增加5%速度
+    "health_per_level": 0,      # 每级生命值加成（目前为0，由时间递增难度系统处理）
+    "damage_per_level": 0.05,   # 每级增加5%伤害
+    "speed_per_level": 0.05,    # 每级增加5%速度
 }
 
-# 敌人基础配置
+# 敌人基础配置 - 定义每种敌人的属性
 ENEMY_CONFIGS = {
-    # 幽灵 - 基础敌人
+    # 幽灵 - 基础敌人，移动速度中等，血量较低
     "ghost": {
         "health": 80,           # 基础生命值
-        "damage": 25,           # 基础伤害（从10提高到25）
+        "damage": 25,           # 基础伤害
         "speed": 100,           # 基础移动速度
         "score_value": 50,      # 击败后获得的分数
+        "animation_speed": 0.0333, # 动画播放速度
+        "scale": 1.0,           # 图像缩放大小
+    },
+    
+    # 萝卜 - 较慢但更健壮的敌人，近战攻击
+    "radish": {
+        "health": 150,          # 高生命值
+        "damage": 35,           # 较高伤害
+        "speed": 70,            # 移动速度较慢
+        "score_value": 15,      # 击败分数
         "animation_speed": 0.0333, # 动画速度
         "scale": 1.0,           # 缩放大小
     },
     
-    # 萝卜 - 较慢但更健壮的敌人
-    "radish": {
-        "health": 150,
-        "damage": 35,           # 基础伤害（从15提高到35）
-        "speed": 70,
-        "score_value": 15,
-        "animation_speed": 0.0333,
-        "scale": 1.0,
-    },
-    
-    # 蝙蝠 - 快速但脆弱的敌人
+    # 蝙蝠 - 快速但脆弱的敌人，森林地图专属
     "bat": {
-        "health": 60,
-        "damage": 25,           # 基础伤害（从8提高到20）
-        "speed": 280,
-        "score_value": 80,
-        "animation_speed": 0.0333,
-        "scale": 2.0,
+        "health": 60,           # 低生命值（脆弱）
+        "damage": 25,           # 中等伤害
+        "speed": 280,           # 极快移动速度
+        "score_value": 80,      # 击败分数
+        "animation_speed": 0.0333, # 动画速度
+        "scale": 2.0,           # 较大的缩放
     },
     
-    # 史莱姆 - 远程攻击敌人
+    # 史莱姆 - 远程攻击敌人，发射子弹
     "slime": {
-        "health": 100,
-        "damage": 30,           # 基础伤害（从12提高到30）
-        "speed": 80,
-        "score_value": 150,
-        "animation_speed": 0.0333,
-        "scale": 1.0,
-        "attack_range": 800,    # 攻击范围
-        "min_attack_range": 300, # 最小攻击距离
-        "attack_cooldown": 2.0,  # 攻击冷却时间(秒)
-        "projectile_speed": 180, # 投射物速度
+        "health": 100,          # 中等生命值
+        "damage": 30,           # 子弹伤害
+        "speed": 80,            # 移动速度较慢
+        "score_value": 150,     # 击败分数
+        "animation_speed": 0.0333, # 动画速度
+        "scale": 1.0,           # 缩放大小
+        "attack_range": 800,    # 最大攻击距离
+        "min_attack_range": 300, # 最小攻击距离（太近不攻击）
+        "attack_cooldown": 2.0,  # 攻击冷却时间（秒）
+        "projectile_speed": 180, # 投射物飞行速度
     },
     
-    # boss1 - Boss级敌人，每5次生成一次，数值很高
+    # boss1（骷髅）- Boss级敌人，数值较高
     "boss1": {
-        "health": 200,
-        "damage": 50,          # 基础伤害（从80提高到150）
-        "speed": 150,
-        "score_value": 200,
-        "animation_speed": 0.0333,
-        "scale": 1.5,
+        "health": 200,          # 高生命值
+        "damage": 50,           # 高伤害
+        "speed": 150,           # 移动速度中等偏快
+        "score_value": 200,     # 击败分数
+        "animation_speed": 0.0333, # 动画速度
+        "scale": 1.5,           # 较大的Boss体型
     },
     
-    # skt - 双形态敌人，idle1远程攻击，idle2近战攻击
+    # skt - 双形态敌人，idle1远程攻击(无近战)，idle2近战攻击(无远程)
     "skt": {
-        "health": 120,
-        "damage": 40,
-        "speed": 90,
-        "score_value": 200,
-        "animation_speed": 0.0333,
-        "scale": 1.0,
-        "attack_range": 600,
-        "min_attack_range": 200,
-        "attack_cooldown": 2.0,
-        "projectile_speed": 200,
-        "form_switch_interval": 5.0,
+        "health": 120,          # 中等生命值
+        "damage": 40,           # 伤害值
+        "speed": 90,            # 移动速度
+        "score_value": 200,     # 击败分数
+        "animation_speed": 0.0333, # 动画速度
+        "scale": 1.0,           # 缩放大小
+        "attack_range": 600,    # 远程攻击范围
+        "min_attack_range": 200, # 最小攻击距离
+        "attack_cooldown": 2.0,  # 攻击冷却时间
+        "projectile_speed": 200, # 投射物速度
+        "form_switch_interval": 5.0, # 形态切换间隔（秒）
     },
     
-    # bsl - 隐身敌人，远离玩家时透明，靠近才出现
+    # bsl - 隐身敌人，远离玩家时透明，靠近才可见
     "bsl": {
-        "health": 150,
-        "damage": 35,
-        "speed": 120,
-        "score_value": 250,
-        "animation_speed": 0.0333,
-        "scale": 1.0,
-        "visibility_range": 150,
-        "visibility_fade_range": 50,
+        "health": 150,          # 中等生命值
+        "damage": 35,           # 伤害值
+        "speed": 120,           # 移动速度
+        "score_value": 250,     # 击败分数
+        "animation_speed": 0.0333, # 动画速度
+        "scale": 1.0,           # 缩放大小
+        "visibility_range": 150, # 可见范围（距离玩家多少单位内可见）
+        "visibility_fade_range": 50, # 渐隐范围（超出可见范围后开始透明）
     },
     
-    # xiniu - 疾跑敌人，靠近玩家时加速奔跑
+    # xiniu（犀牛）- 疾跑敌人，靠近玩家时加速冲刺
     "xiniu": {
-        "health": 100,
-        "damage": 45,
-        "speed": 100,
-        "score_value": 180,
-        "animation_speed": 0.0333,
-        "scale": 1.0,
-        "charge_range": 200,
-        "charge_speed_multiplier": 1.8,
+        "health": 100,          # 中等生命值
+        "damage": 45,           # 冲刺伤害较高
+        "speed": 100,           # 普通移动速度
+        "score_value": 180,     # 击败分数
+        "animation_speed": 0.0333, # 动画速度
+        "scale": 1.0,           # 缩放大小
+        "charge_range": 200,    # 冲刺触发范围（距离玩家多少单位内开始冲刺）
+        "charge_speed_multiplier": 1.8, # 冲刺速度倍率
     },
     
     # ap - 愤怒敌人，生命值低于50%时切换愤怒形态
     "ap": {
-        "health": 200,
-        "damage": 30,
-        "speed": 80,
-        "score_value": 300,
-        "animation_speed": 0.0333,
-        "scale": 1.0,
-        "enrage_damage_multiplier": 2.0,
-        "enrage_speed_multiplier": 2.0,
+        "health": 200,          # 较高生命值
+        "damage": 30,           # 正常状态伤害
+        "speed": 80,            # 正常状态速度
+        "score_value": 300,     # 击败分数
+        "animation_speed": 0.0333, # 动画速度
+        "scale": 1.0,           # 缩放大小
+        "enrage_damage_multiplier": 2.0, # 愤怒状态伤害倍率（×2）
+        "enrage_speed_multiplier": 2.0,  # 愤怒状态速度倍率（×2）
     },
     
-    # plant - 固定炮台敌人，不移动，根据距离发射不同弹幕
+    # plant（植物）- 固定炮台敌人，不移动，根据距离发射不同弹幕
     "plant": {
-        "health": 180,
-        "damage": 0,
-        "speed": 0,
-        "score_value": 250,
-        "animation_speed": 0.0333,
-        "scale": 1.0,
-        "attack_cooldown": 1.5,
-        "attack_cooldown_near": 0.8,
-        "near_range": 250,
-        "bullet_speed": 200,
-        "bullet_damage": 20,
+        "health": 180,          # 中等生命值
+        "damage": 0,            # 无近战伤害
+        "speed": 0,             # 不移动
+        "score_value": 250,     # 击败分数
+        "animation_speed": 0.0333, # 动画速度
+        "scale": 1.0,           # 缩放大小
+        "attack_cooldown": 1.5,       # 远程攻击冷却时间
+        "attack_cooldown_near": 0.8,  # 近距离攻击冷却时间（更快）
+        "near_range": 250,            # 近距离阈值
+        "bullet_speed": 200,          # 子弹速度
+        "bullet_damage": 20,          # 子弹伤害
     },
     
-    # fly - 飞行敌人，有碰撞伤害，发射减速子弹
+    # fly（苍蝇）- 飞行敌人，有碰撞伤害，发射减速子弹
     "fly": {
-        "health": 90,
-        "damage": 30,
-        "speed": 140,
-        "score_value": 200,
-        "animation_speed": 0.0333,
-        "scale": 0.35,
-        "attack_range": 500,
-        "min_attack_range": 150,
-        "attack_cooldown": 2.0,
-        "bullet_speed": 220,
-        "bullet_damage": 25,
-        "slow_percent": 0.4,
-        "slow_duration": 3.0,
+        "health": 90,           # 中等生命值
+        "damage": 30,           # 碰撞伤害
+        "speed": 140,           # 飞行速度
+        "score_value": 200,     # 击败分数
+        "animation_speed": 0.0333, # 动画速度
+        "scale": 0.35,          # 较小体型
+        "attack_range": 500,    # 攻击范围
+        "min_attack_range": 150, # 最小攻击距离
+        "attack_cooldown": 2.0,  # 攻击冷却时间
+        "bullet_speed": 220,    # 子弹速度
+        "bullet_damage": 25,    # 子弹伤害
+        "slow_percent": 0.4,    # 减速百分比（减速40%）
+        "slow_duration": 3.0,   # 减速持续时间（秒）
     }
 }
 

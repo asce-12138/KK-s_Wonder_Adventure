@@ -17,7 +17,16 @@ from .components.components import (
 )
 
 class Player(pygame.sprite.Sprite):
+    """玩家类，使用ECS架构，整合所有玩家组件"""
+    
     def __init__(self, x, y, hero_type="ninja_frog"):
+        """初始化玩家实例
+        
+        Args:
+            x: 初始X坐标
+            y: 初始Y坐标
+            hero_type: 英雄类型（如ninja_frog、kk等）
+        """
         super().__init__()
         
         # 加载英雄配置
@@ -25,8 +34,8 @@ class Player(pygame.sprite.Sprite):
         self.hero_type = hero_type
         
         # 世界坐标（实际位置）
-        self.world_x = x
-        self.world_y = y
+        self.world_x = x  # 玩家在游戏世界中的X坐标
+        self.world_y = y  # 玩家在游戏世界中的Y坐标
         
         # 初始化各组件
         self._init_components()
@@ -45,18 +54,18 @@ class Player(pygame.sprite.Sprite):
                 ]
 
         # 设置初始图像和碰撞矩形
-        self.image = self.animation.get_current_frame()
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
+        self.image = self.animation.get_current_frame()  # 当前显示的图像
+        self.rect = self.image.get_rect()  # 碰撞矩形
+        self.rect.center = (x, y)  # 设置矩形中心位置
         
-        # 创建遮罩
+        # 创建遮罩（用于精确碰撞检测）
         self.mask = None
         self.update_mask()
         
-        # 轮廓相关
-        self.show_outline = False
+        # 轮廓相关（调试用）
+        self.show_outline = False  # 是否显示轮廓
         self.outline_color = (255, 0, 0)  # 默认红色轮廓
-        self.outline_thickness = 1
+        self.outline_thickness = 1  # 轮廓厚度
         
         # 添加初始武器
         starting_weapon = self.hero_config.get("starting_weapon", "knife")

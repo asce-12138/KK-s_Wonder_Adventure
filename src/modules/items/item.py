@@ -2,18 +2,29 @@ import pygame
 from ..resource_manager import resource_manager
 
 class Item(pygame.sprite.Sprite):
+    """道具类，代表游戏中的可拾取物品（经验、金币、药水、宝箱等）"""
+    
     def __init__(self, x, y, item_type, item_id=None, on_collect_callback=None):
-        super().__init__()
-        self.world_x = x
-        self.world_y = y
-        self.item_type = item_type
-        self.item_id = item_id
-        self.collected = False
-        self.on_collect_callback = on_collect_callback
+        """初始化道具实例
         
-        # 根据物品类型设置图像
+        Args:
+            x: 世界坐标X
+            y: 世界坐标Y
+            item_type: 道具类型（'exp'经验宝石, 'coin'金币, 'health'药水, 'chest'宝箱）
+            item_id: 网络同步用唯一ID
+            on_collect_callback: 拾取时的回调函数（用于网络同步）
+        """
+        super().__init__()
+        self.world_x = x  # 在游戏世界中的X坐标
+        self.world_y = y  # 在游戏世界中的Y坐标
+        self.item_type = item_type  # 道具类型
+        self.item_id = item_id  # 网络同步用唯一ID
+        self.collected = False  # 是否已被拾取
+        self.on_collect_callback = on_collect_callback  # 拾取回调
+        
+        # 根据物品类型设置图像和属性
         if item_type == 'exp':
-            # 加载宝石精灵表并获取第一个宝石
+            # 经验宝石 - 击杀敌人有概率掉落
             spritesheet = resource_manager.load_spritesheet('gems_spritesheet', 'images/items/gems.png')
             self.image = resource_manager.create_animation('exp_gem', spritesheet,
                                                          frame_width=16, frame_height=16,
@@ -21,6 +32,7 @@ class Item(pygame.sprite.Sprite):
                                                          frame_duration=0.1).get_current_frame()
             self.value = 100  # 经验值
         elif item_type == 'coin':
+            # 金币 - 击杀敌人有概率掉落
             spritesheet = resource_manager.load_spritesheet('money_spritesheet', 'images/items/money.png')
             self.image = resource_manager.create_animation('coin', spritesheet,
                                                          frame_width=16, frame_height=16,
@@ -28,13 +40,14 @@ class Item(pygame.sprite.Sprite):
                                                          frame_duration=0.1).get_current_frame()
             self.value = 1  # 金币值
         elif item_type == 'health':
+            # 药水 - 击杀敌人有概率掉落，恢复生命值
             spritesheet = resource_manager.load_spritesheet('potions_spritesheet', 'images/items/potions.png')
             self.image = resource_manager.create_animation('health', spritesheet,
                                                          frame_width=16, frame_height=16,
                                                          frame_count=1, row=0,
                                                          frame_duration=0.1).get_current_frame()
             self.value = 20  # 恢复血量
-        # 杀boss掉落，开宝箱抽奖(武器、被动升级卡片，组合超武升级只能通过宝箱)
+        # 宝箱 - 杀boss掉落，开宝箱抽奖(武器、被动升级卡片，组合超武升级只能通过宝箱)
         elif item_type == 'chest':
             spritesheet = resource_manager.load_spritesheet('chest_spritesheet', 'images/items/chests_bundled_16x16.png')
             self.image = resource_manager.create_animation('chest', spritesheet,
@@ -42,19 +55,24 @@ class Item(pygame.sprite.Sprite):
                                                          frame_count=1, row=0, col=6,
                                                          frame_duration=0.1).get_current_frame()
 
-
         # 缩放图片到合适大小
         if item_type == 'chest':
-            self.image = pygame.transform.scale(self.image, (24, 24))  # 将物品图片缩放为24x24像素
+            self.image = pygame.transform.scale(self.image, (24, 24))  # 宝箱略大（24x24）
         else:
-            self.image = pygame.transform.scale(self.image, (16, 16))  # 将物品图片缩放为16x16像素
+            self.image = pygame.transform.scale(self.image, (16, 16))  # 普通道具（16x16）
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         
-        # 物品移动速度
+        # 物品移动速度（被吸引向玩家移动的速度）
         self.attract_speed = 350
         
     def update(self, dt, player):
+        """更新道具状态，实现向玩家吸引的逻辑
+        
+        Args:
+            dt: 时间增量
+            player: 玩家对象
+        """
         if self.collected:
             return
             
@@ -74,6 +92,11 @@ class Item(pygame.sprite.Sprite):
             self.collect(player)
             
     def collect(self, player):
+        """处理道具被玩家拾取的逻辑
+        
+        Args:
+            player: 拾取道具的玩家对象
+        """
         if self.collected:
             return
             

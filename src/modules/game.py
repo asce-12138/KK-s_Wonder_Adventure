@@ -23,87 +23,116 @@ from .weapons.weapon_stats import WeaponStatType, DEFAULT_WEAPON_STATS
 from .enemies.visual_enemy_projectile import VisualEnemyProjectile
 
 class Game:
+    """游戏主类，负责协调所有游戏子系统"""
+    
     def __init__(self, screen, network_mode=False, is_host=False, local_player_id=1, on_return_to_lobby=None):
-        self.screen = screen
-        self.running = True
-        self.paused = False
-        self.game_over = False
-        self.in_main_menu = True
-        self.in_map_hero_select = False
+        """初始化游戏实例
         
-        self.network_mode = network_mode
-        self.is_host = is_host
-        self.local_player_id = local_player_id
-        self.on_return_to_lobby = on_return_to_lobby
-        self.disconnect_message = None
-        self.network_sync_timer = 0
-        self.network_sync_interval = 0.05
+        Args:
+            screen: Pygame屏幕表面
+            network_mode: 是否为网络联机模式
+            is_host: 是否为主机
+            local_player_id: 本地玩家ID（1或2）
+            on_return_to_lobby: 返回网络大厅的回调函数
+        """
+        self.screen = screen  # 游戏屏幕
+        self.running = True  # 游戏运行状态
+        self.paused = False  # 暂停状态
+        self.game_over = False  # 游戏结束状态
+        self.in_main_menu = True  # 是否在主菜单
+        self.in_map_hero_select = False  # 是否在地图和角色选择界面
+        
+        # 网络模式相关
+        self.network_mode = network_mode  # 是否为联机模式
+        self.is_host = is_host  # 是否为主机（主机负责怪物AI和碰撞判定）
+        self.local_player_id = local_player_id  # 本地玩家编号
+        self.on_return_to_lobby = on_return_to_lobby  # 返回联机大厅的回调
+        self.disconnect_message = None  # 断开连接提示消息
+        self.network_sync_timer = 0  # 网络同步计时器
+        self.network_sync_interval = 0.05  # 网络同步间隔（20Hz）
         
         # 怪物同步相关
-        self.enemy_sync_timer = 0
-        self.enemy_sync_interval = 0.1  # 10Hz 怪物状态同步
+        self.enemy_sync_timer = 0  # 怪物状态同步计时器
+        self.enemy_sync_interval = 0.1  # 怪物状态同步间隔（10Hz）
         self.pending_dead_enemies = []  # 本帧死亡的敌人，用于主机广播
         
         # 敌人投射物视觉副本（客户端显示主机敌人子弹）
         self.visual_enemy_projectiles = pygame.sprite.Group()
         
-        self.remote_player = None
-        self.remote_player_data = None
-        self.show_disconnect_popup = False
-        self.disconnect_popup_timer = 0
+        # 远程玩家相关
+        self.remote_player = None  # 远程玩家实例
+        self.remote_player_data = None  # 远程玩家网络数据
+        self.show_disconnect_popup = False  # 是否显示断开连接弹窗
+        self.disconnect_popup_timer = 0  # 断开连接弹窗倒计时
         
+        # 初始化资源管理器
         resource_manager._init_resources()
         
+        # 屏幕中心点坐标
         self.screen_center_x = self.screen.get_width() // 2
         self.screen_center_y = self.screen.get_height() // 2
         
-        self.player = None
+        # 玩家相关
+        self.player = None  # 当前玩家实例
         
-        self.camera_x = 0
-        self.camera_y = 0
+        # 相机位置
+        self.camera_x = 0  # 相机X坐标
+        self.camera_y = 0  # 相机Y坐标
         
-        self.grid_size = 50
-        self.grid_color = (50, 50, 50)
+        # 网格相关（备用渲染）
+        self.grid_size = 50  # 网格大小
+        self.grid_color = (50, 50, 50)  # 网格颜色
         
-        self.enemy_manager = None
-        self.item_manager = None
-        self.save_system = SaveSystem()
-        self.upgrade_manager = UpgradeManager()
-        self.map_manager = MapManager(screen)
+        # 管理器实例
+        self.enemy_manager = None  # 敌人管理器
+        self.item_manager = None  # 道具管理器
+        self.save_system = SaveSystem()  # 存档系统
+        self.upgrade_manager = UpgradeManager()  # 升级管理器
+        self.map_manager = MapManager(screen)  # 地图管理器
         
-        self.ui = UI(screen)
+        # UI组件
+        self.ui = UI(screen)  # 游戏内UI（血条、经验条等）
         
+        # 菜单系统
         if self.network_mode:
+            # 联机模式直接进入地图选择，不显示主菜单
             self.main_menu = None
             self.in_main_menu = False
             self.in_map_hero_select = True
         else:
+            # 单机模式显示主菜单，包含联机模式选项
             extra_options = [{'text': '联机模式', 'action': 'multiplayer'}]
             self.main_menu = MainMenu(screen, extra_options=extra_options)
         
-        self.pause_menu = PauseMenu(screen)
-        self.game_over_menu = GameOverMenu(screen)
-        self.victory_menu = GameOverMenu(screen, title="你过关")
-        self.upgrade_menu = UpgradeMenu(screen)
-        self.save_menu = SaveMenu(screen, True)
-        self.load_menu = SaveMenu(screen, False)
+        # 创建各类菜单实例
+        self.pause_menu = PauseMenu(screen)  # 暂停菜单
+        self.game_over_menu = GameOverMenu(screen)  # 游戏结束菜单
+        self.victory_menu = GameOverMenu(screen, title="你过关")  # 胜利菜单
+        self.upgrade_menu = UpgradeMenu(screen)  # 升级菜单
+        self.save_menu = SaveMenu(screen, True)  # 存档菜单
+        self.load_menu = SaveMenu(screen, False)  # 读档菜单
         
+        # 地图和角色选择菜单
         self.map_hero_select_menu = MapHeroSelectMenu(
             screen,
             on_start_game=self._start_game_with_selection,
             on_back=self._back_to_main_menu
         )
         
-        self.game_time = 0
-        self.kill_num = 0
-        self.level = 1
-        self.level_complete = False
-        self.victory_coin_threshold = 300
+        # 游戏统计数据
+        self.game_time = 0  # 游戏时间（秒）
+        self.kill_num = 0  # 击杀数
+        self.level = 1  # 当前等级（每分钟提升一级）
+        self.level_complete = False  # 是否过关
+        self.victory_coin_threshold = 300  # 过关所需金币数
         
+        # 当前地图名称
         self.current_map = None
         
+        # 弹窗字体
         self.popup_font = FontManager.get_font(28)
         
+        # 根据模式初始化
         if self.network_mode:
             self._setup_network()
             self.map_hero_select_menu.show()
