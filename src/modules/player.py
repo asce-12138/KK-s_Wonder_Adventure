@@ -1,3 +1,8 @@
+# ============================================================
+# P1-1: 玩家实体类 - player.py
+# 功能: 使用ECS架构整合6个核心组件，提供统一的玩家接口
+# 对应文档: https://github.com/.../CODE_DOCUMENTATION.md#p1---玩家实体类
+# ============================================================
 import pygame
 import math
 from .resource_manager import resource_manager
@@ -19,82 +24,75 @@ from .components.components import (
 class Player(pygame.sprite.Sprite):
     """玩家类，使用ECS架构，整合所有玩家组件"""
     
+    # ============================================================
+    # P1-2: 初始化方法 (__init__)
+    # 流程: 加载配置 → 设置坐标 → 初始化组件 → 缩放动画 → 设置图像和遮罩 → 添加初始武器
+    # ============================================================
     def __init__(self, x, y, hero_type="ninja_frog"):
-        """初始化玩家实例
-        
-        Args:
-            x: 初始X坐标
-            y: 初始Y坐标
-            hero_type: 英雄类型（如ninja_frog、kk等）
-        """
+        """初始化玩家实例"""
         super().__init__()
         
-        # 加载英雄配置
+        # P1-2-1: 加载英雄配置（属性、动画、初始武器）
         self.hero_config = get_hero_config(hero_type)
         self.hero_type = hero_type
         
-        # 世界坐标（实际位置）
-        self.world_x = x  # 玩家在游戏世界中的X坐标
-        self.world_y = y  # 玩家在游戏世界中的Y坐标
+        # P1-2-2: 设置世界坐标（游戏世界中的实际位置）
+        self.world_x = x
+        self.world_y = y
         
-        # 初始化各组件
+        # P1-2-3: 初始化6个核心组件（ECS架构）
         self._init_components()
 
-        # 根据 hero_config 中的 scale_factor 对所有动画帧进行缩放
-        # 优先级: animation 级 scale_factor > hero 级 scale_factor > 1.0
+        # P1-2-4: 根据配置缩放动画帧
+        # 优先级: animation级scale_factor > hero级scale_factor > 1.0
         hero_scale = self.hero_config.get("scale_factor", 1.0)
         for anim_name, anim in self.animation.animations.items():
-            # 优先使用 animation 级的 scale_factor，否则用 hero 级
             anim_info = self.hero_config.get("animations", {}).get(anim_name, {})
             anim_scale = anim_info.get("scale_factor", hero_scale)
             if anim_scale != 1.0:
-                anim.frames = [
-                    pygame.transform.scale_by(frame, anim_scale)
-                    for frame in anim.frames
-                ]
+                anim.frames = [pygame.transform.scale_by(frame, anim_scale) for frame in anim.frames]
 
-        # 设置初始图像和碰撞矩形
-        self.image = self.animation.get_current_frame()  # 当前显示的图像
-        self.rect = self.image.get_rect()  # 碰撞矩形
-        self.rect.center = (x, y)  # 设置矩形中心位置
-        
-        # 创建遮罩（用于精确碰撞检测）
+        # P1-2-5: 设置初始图像、碰撞矩形和遮罩
+        self.image = self.animation.get_current_frame()
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
         self.mask = None
         self.update_mask()
         
-        # 轮廓相关（调试用）
-        self.show_outline = False  # 是否显示轮廓
-        self.outline_color = (255, 0, 0)  # 默认红色轮廓
-        self.outline_thickness = 1  # 轮廓厚度
+        # P1-2-6: 轮廓相关（调试用，F2键切换）
+        self.show_outline = False
+        self.outline_color = (255, 0, 0)
+        self.outline_thickness = 1
         
-        # 添加初始武器
+        # P1-2-7: 添加初始武器（从配置读取）
         starting_weapon = self.hero_config.get("starting_weapon", "knife")
         self.add_weapon(starting_weapon)
         
+    # ============================================================
+    # P1-3: 组件初始化方法 (_init_components)
+    # 初始化6个核心组件：动画、移动、生命值、武器管理、被动管理、进阶系统
+    # ============================================================
     def _init_components(self):
         """初始化所有组件"""
-        
-        # 基础属性
         base_stats = self.hero_config["base_stats"]
         
-        # 1. 动画组件
+        # P1-3-1: 动画组件 - 管理精灵表和帧播放
         self.animation = AnimationComponent(self)
         self.animation.load_animations(self.hero_config["animations"])
         
-        # 2. 移动组件
+        # P1-3-2: 移动组件 - 处理WASD输入和物理移动
         self.movement = MovementComponent(self, speed=base_stats["speed"])
         
-        # 3. 生命值组件
+        # P1-3-3: 生命值组件 - 管理血量、防御、回血、无敌时间
         self.health_component = HealthComponent(
             self,
             max_health=base_stats["max_health"],
             defense=base_stats["defense"],
             health_regen=base_stats["health_regen"]
         )
-        # 设置受伤回调
-        self.health_component.on_damaged = self._on_damaged
+        self.health_component.on_damaged = self._on_damaged  # 设置受伤回调
         
-        # 4. 武器管理器
+        # P1-3-4: 武器管理器 - 管理武器列表、攻击冷却、武器升级
         self.weapon_manager = WeaponManager(self)
         self.weapon_manager.available_weapons = {
             'knife': Knife,
@@ -102,47 +100,44 @@ class Player(pygame.sprite.Sprite):
             'frost_nova': FrostNova
         }
         
-        # 5. 被动技能管理器
+        # P1-3-5: 被动技能管理器 - 管理被动等级和属性加成
         self.passive_manager = PassiveManager(self)
-        self.passive_manager.on_stats_changed = self._update_stats
+        self.passive_manager.on_stats_changed = self._update_stats  # 设置属性变化回调
         
-        # 6. 进阶系统
+        # P1-3-6: 进阶系统 - 管理经验、等级、金币
         self.progression = ProgressionSystem(self, base_exp_multiplier=base_stats["exp_multiplier"])
         self.progression.set_luck(base_stats["luck"])
         
-        # 其他属性（兼容旧接口）
+        # P1-3-7: 其他属性（兼容旧接口）
         self.pickup_range = base_stats["pickup_range"]
         self.attack_power = base_stats["attack_power"]
         
+    # ============================================================
+    # P1-4: 回调方法
+    # ============================================================
     def _on_damaged(self, amount):
-        """受伤回调"""
-        # 设置动画为受伤状态
+        """受伤回调：切换到受伤动画"""
         self.animation.set_animation('hurt')
         
+    # ============================================================
+    # P1-5: 属性更新方法 (_update_stats)
+    # 根据被动技能加成重新计算所有属性，应用到各组件
+    # ============================================================
     def _update_stats(self):
-        """更新玩家属性"""
-        # 获取基础属性
+        """更新玩家属性：根据被动加成重新计算并应用到各组件"""
         base_stats = self.hero_config["base_stats"].copy()
-        
-        # 计算被动加成后的属性
         final_stats = self.passive_manager.calculate_stats(base_stats)
         
         # 应用属性到各组件
         self.movement.set_speed(final_stats["speed"])
-        
         self.health_component.max_health = final_stats["max_health"]
         self.health_component.defense = final_stats["defense"]
         self.health_component.health_regen = final_stats["health_regen"]
-        
         self.progression.set_exp_multiplier(final_stats["exp_multiplier"])
         self.progression.set_luck(final_stats["luck"])
-        
-        # 更新其他属性
         self.pickup_range = final_stats["pickup_range"]
         self.attack_power = final_stats["attack_power"]
-        
-        # 更新武器攻击力
-        self.weapon_manager.apply_attack_power(self.attack_power)
+        self.weapon_manager.apply_attack_power(self.attack_power)  # 更新武器攻击力
         
     # 兼容旧接口的属性访问器
     @property
