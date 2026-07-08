@@ -467,16 +467,12 @@ class Game:
         self.game_over = False           # 重置游戏结束状态
         self.paused = False              # 重置暂停状态
         
-        self.load_map(map_id)  # 加载选择的地图
-        
-        map_width, map_height = self.map_manager.get_map_size()
-        
-        # 创建玩家实例（传入角色类型）
+        # 创建玩家实例（传入角色类型），必须在load_map之前创建
         self.player = Player(self.screen_center_x, self.screen_center_y, hero_id)
         
-        # 将玩家放置在地图中心
-        self.player.world_x = map_width // 2
-        self.player.world_y = map_height // 2
+        self.load_map(map_id)  # 加载选择的地图（此时self.player已存在）
+        
+        map_width, map_height = self.map_manager.get_map_size()
         
         # 联机模式下玩家2从偏移位置开始（避免重叠）
         if self.network_mode and self.local_player_id == 2:
